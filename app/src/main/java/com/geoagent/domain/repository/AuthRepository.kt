@@ -1,17 +1,19 @@
 package com.geoagent.domain.repository
 
-import com.geoagent.data.api.dto.*
-import com.geoagent.data.api.UserResponse
+import com.geoagent.data.api.dto.EmailHistoryResponse
+import com.geoagent.data.api.dto.EmailSendResponse
+import com.geoagent.data.api.dto.UserResponse
 
 interface AuthRepository {
-    suspend fun login(email: String, password: String): Result<TokenResponse>
-    suspend fun register(username: String, email: String, password: String, code: String): Result<RegisterResponse>
-    suspend fun sendVerificationCode(email: String): Result<SendCodeResponse>
-    suspend fun refreshToken(): Result<TokenResponse>
+    suspend fun loginWithPassword(username: String, password: String): Result<Unit>
+    suspend fun loginWithEmailCode(email: String, code: String): Result<Unit>
+    suspend fun register(username: String, email: String, password: String, code: String): Result<Unit>
+    suspend fun sendVerificationCode(email: String): Result<Unit>
     suspend fun getMe(): Result<UserResponse>
-    suspend fun updateMe(fullName: String?, avatarUrl: String?): Result<UserResponse>
-    suspend fun changePassword(current: String, new: String, confirm: String): Result<Unit>
-    suspend fun getPreferences(): Result<PreferencesResponse>
-    suspend fun updatePreferences(theme: String?, language: String? = null): Result<PreferencesResponse>
+    suspend fun updateMe(fullName: String?, avatarUrl: String? = null): Result<UserResponse>
+    suspend fun changePassword(oldPassword: String, newPassword: String, confirmPassword: String): Result<Unit>
+    suspend fun isLoggedIn(): Boolean
+    suspend fun sendEmail(toAddr: String, subject: String, content: String): Result<EmailSendResponse>
+    suspend fun getEmailHistory(limit: Int = 20): Result<EmailHistoryResponse>
     suspend fun logout()
 }

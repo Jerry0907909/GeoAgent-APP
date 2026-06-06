@@ -1,6 +1,18 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+}
+
+// Read .env file
+val envFile = rootProject.file(".env")
+val envVars = mutableMapOf<String, String>()
+if (envFile.exists()) {
+    envFile.readLines().forEach { line ->
+        val trimmed = line.trim()
+        if (trimmed.isNotBlank() && !trimmed.startsWith("#") && trimmed.contains("=")) {
+            val parts = trimmed.split("=", limit = 2)
+            envVars[parts[0].trim()] = parts[1].trim()
+        }
+    }
 }
 
 android {
@@ -11,6 +23,10 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.geoagent"
         minSdk = 33
@@ -19,6 +35,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "DEEPSEEK_API_KEY", "\"${envVars["DEEPSEEK_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "TAVILY_API_KEY", "\"${envVars["TAVILY_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "SMTP_HOST", "\"${envVars["SMTP_HOST"] ?: ""}\"")
+        buildConfigField("int", "SMTP_PORT", "${envVars["SMTP_PORT"] ?: "465"}")
+        buildConfigField("String", "SMTP_USER", "\"${envVars["SMTP_USER"] ?: ""}\"")
+        buildConfigField("String", "SMTP_PASSWORD", "\"${envVars["SMTP_PASSWORD"] ?: ""}\"")
+        buildConfigField("String", "EMAIL_FROM", "\"${envVars["EMAIL_FROM"] ?: ""}\"")
     }
 
     buildTypes {
@@ -37,59 +61,35 @@ android {
 }
 
 dependencies {
-    // Compose BOM
-    val composeBom = platform(libs.compose.bom)
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
-
-    // Core Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.constraintlayout)
+    implementation(libs.coordinatorlayout)
+    implementation(libs.recyclerview)
+    implementation(libs.drawerlayout)
+    implementation(libs.swiperefreshlayout)
+    implementation(libs.fragment.ktx)
+    implementation(libs.lifecycle.runtime.ktx)
 
-    // Compose
-    implementation(libs.compose.ui)
-    implementation(libs.compose.ui.graphics)
-    implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.compose.material3)
-    implementation(libs.compose.material.icons.extended)
-    debugImplementation(libs.compose.ui.tooling)
-    androidTestImplementation(libs.compose.ui.test.junit4)
-
-    // Activity Compose
-    implementation(libs.activity.compose)
-
-    // Lifecycle
-    implementation(libs.lifecycle.runtime.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
-
-    // Navigation
-    implementation(libs.navigation.compose)
-
-    // Koin DI
     implementation(libs.koin.android)
-    implementation(libs.koin.androidx.compose)
 
-    // Network
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
+    implementation(libs.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
-    implementation(libs.okhttp.sse)
 
-    // Embedded Server
-    implementation(libs.nanohttpd)
-
-    // Local Storage
     implementation(libs.datastore.preferences)
 
-    // Image
-    implementation(libs.coil.compose)
+    implementation(libs.pdfbox.android)
+    implementation(libs.poi.ooxml)
 
-    // Markdown rendering (0.26.0 is on Maven Central; 0.27.2 does not exist)
-    implementation(libs.markdown.renderer)
-    implementation(libs.markdown.renderer.m3)
+    implementation(libs.mlkit.text.recognition)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
-    // Testing
+    implementation(libs.coil)
+    implementation(libs.markwon.core)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

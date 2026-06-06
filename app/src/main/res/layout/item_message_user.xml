@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- User message: right-aligned, cyan-tinted bubble -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="end"
+    android:orientation="vertical"
+    android:paddingVertical="6dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="@dimen/bubble_max_width"
+        app:cardBackgroundColor="@color/bubble_user_bg"
+        app:cardCornerRadius="@dimen/radius_lg"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <TextView
+            android:id="@+id/tv_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/bubble_padding_h"
+            android:paddingVertical="@dimen/bubble_padding_v"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/on_background"
+            android:lineSpacingExtra="3dp"
+            android:autoLink="web"
+            android:linksClickable="true" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <ImageView
+        android:id="@+id/iv_image"
+        android:layout_width="200dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+</LinearLayout>

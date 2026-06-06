@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary: DeepSeek Blue (same accent, adjusted for dark) -->
+    <color name="primary">#5B7FFF</color>
+    <color name="primary_soft">#1A2A4A</color>
+    <color name="primary_container">@color/primary_soft</color>
+    <color name="primary_border">#3D5AA8</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_primary_soft">#5B7FFF</color>
+    <color name="on_primary_container">@color/on_primary_soft</color>
+
+    <color name="secondary">#6B7280</color>
+    <color name="secondary_container">#1E293B</color>
+
+    <!-- Background & Surface -->
+    <color name="background">#0F1115</color>
+    <color name="surface">#1A1D23</color>
+    <color name="surface_elevated">#1A1D23</color>
+
+    <!-- Text -->
+    <color name="on_background">#F3F4F6</color>
+    <color name="on_surface">#F3F4F6</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_muted">#6B7280</color>
+
+    <!-- Outline & Border -->
+    <color name="outline">#2D3139</color>
+    <color name="outline_subtle">#22252B</color>
+
+    <!-- Bubbles -->
+    <color name="bubble_user_bg">#1A2A4A</color>
+    <color name="bubble_assistant_bg">#1A1D23</color>
+
+    <!-- Chips / pills -->
+    <color name="chip_bg">#252830</color>
+    <color name="chip_active_bg">#1A2A4A</color>
+    <color name="chip_border">#2D3139</color>
+
+    <!-- Composer -->
+    <color name="composer_bg">#1A1D23</color>
+
+    <!-- Semantic -->
+    <color name="destructive">#F87171</color>
+    <color name="success">#4ADE80</color>
+
+    <!-- Status bar -->
+    <color name="status_bar_bg">#0F1115</color>
+    <color name="nav_bar_bg">#0F1115</color>
+    <color name="overlay">#99000000</color>
+
+    <!-- ===== Legacy aliases ===== -->
+    <color name="deepseek_primary">@color/primary</color>
+    <color name="deepseek_primary_soft">@color/primary_soft</color>
+    <color name="deepseek_primary_border">@color/primary_border</color>
+    <color name="deepseek_icon_muted">@color/text_muted</color>
+    <color name="deepseek_bg">@color/background</color>
+    <color name="deepseek_surface">@color/surface</color>
+    <color name="deepseek_text_primary">@color/on_background</color>
+    <color name="deepseek_text_muted">@color/text_secondary</color>
+    <color name="deepseek_border">@color/outline</color>
+    <color name="deepseek_composer_bg">@color/composer_bg</color>
+    <color name="deepseek_send_disabled">#2D3139</color>
+    <color name="deepseek_chip_bg">@color/chip_bg</color>
+    <color name="deepseek_chip_active_bg">@color/chip_active_bg</color>
+    <color name="deepseek_overlay">@color/overlay</color>
+    <color name="corp_primary_light">@color/primary_border</color>
+    <color name="corp_text_secondary">@color/text_secondary</color>
+    <color name="border_input">@color/outline</color>
+    <color name="segment_track">#252830</color>
+    <color name="toolbar_divider">@color/outline_subtle</color>
+    <color name="status_bar">@color/status_bar_bg</color>
+    <color name="nav_bar">@color/nav_bar_bg</color>
+</resources>

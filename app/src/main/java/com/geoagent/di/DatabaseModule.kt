@@ -1,9 +1,11 @@
 package com.geoagent.di
 
+import com.geoagent.data.local.GeoAgentDatabase
+import com.geoagent.data.local.DocumentStore
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-// Room is currently disabled due to KSP compatibility with Kotlin 2.0 + AGP 9.x.
-// Conversation caching will use DataStore serialized JSON instead.
 val databaseModule = module {
-    // Placeholder for future Room database
+    single { GeoAgentDatabase(androidContext()) }
+    single { DocumentStore(androidContext()) }
 }

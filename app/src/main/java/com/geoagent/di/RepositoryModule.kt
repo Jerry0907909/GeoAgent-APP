@@ -11,8 +11,8 @@ import com.geoagent.domain.repository.SearchRepository
 import org.koin.dsl.module
 
 val repositoryModule = module {
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
-    single<ChatRepository> { ChatRepositoryImpl(get(), get(), get()) }
-    single<DocumentRepository> { DocumentRepositoryImpl(get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get(), get()) }
+    single<ChatRepository> { ChatRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<DocumentRepository> { DocumentRepositoryImpl(get(), get()) }
     single<SearchRepository> { SearchRepositoryImpl(get(), get()) }
 }

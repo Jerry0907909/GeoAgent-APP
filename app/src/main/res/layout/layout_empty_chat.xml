@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_empty_chat"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/spacing_2xl">
+
+    <TextView
+        android:id="@+id/tv_empty_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/empty_chat_hint_chat"
+        android:textAppearance="@style/TextAppearance.GeoAgent.HeadlineMedium"
+        android:textColor="@color/on_background" />
+
+    <LinearLayout
+        android:id="@+id/layout_mode_section"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_xl"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:id="@+id/mode_switch_container"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/mode_switch_height"
+            android:background="@drawable/bg_deepseek_segment_track"
+            android:clipChildren="true"
+            android:clipToPadding="true"
+            android:padding="@dimen/mode_switch_padding">
+
+            <View
+                android:id="@+id/mode_switch_indicator"
+                android:layout_width="@dimen/mode_switch_tab_width"
+                android:layout_height="match_parent"
+                android:layout_gravity="start|center_vertical"
+                android:background="@drawable/bg_deepseek_segment_indicator" />
+
+            <LinearLayout
+                android:id="@+id/mode_switch_tabs"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btn_mode_chat"
+                    android:layout_width="@dimen/mode_switch_tab_width"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="@string/mode_chat"
+                    android:textColor="@color/primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btn_mode_rag"
+                    android:layout_width="@dimen/mode_switch_tab_width"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="@string/mode_rag"
+                    android:textColor="@color/text_muted"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tv_mode_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:gravity="center"
+            android:text="@string/mode_hint_chat"
+            android:textAppearance="@style/TextAppearance.GeoAgent.LabelSmall" />
+    </LinearLayout>
+</LinearLayout>

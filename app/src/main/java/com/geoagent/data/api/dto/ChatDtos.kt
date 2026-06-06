@@ -1,10 +1,5 @@
 package com.geoagent.data.api.dto
 
-import com.google.gson.Gson
-import com.google.gson.JsonParser
-
-// Chat DTOs
-
 data class ChatStreamRequest(
     val message: String,
     val conversation_id: Int? = null,
@@ -13,7 +8,13 @@ data class ChatStreamRequest(
     val min_relevance_score: Float? = 0.0f,
     val web_search: Boolean? = false,
     val return_sources: Boolean? = true,
-    val image_base64: String? = null
+    val image_base64: String? = null,
+    val history: List<ChatHistoryMessage> = emptyList()
+)
+
+data class ChatHistoryMessage(
+    val role: String,
+    val content: String
 )
 
 data class ChatResponse(
@@ -22,17 +23,6 @@ data class ChatResponse(
     val conversation_id: Int
 )
 
-data class FollowUpRequest(
-    val question: String,
-    val answer: String,
-    val language: String = "zh"
-)
-
-data class FollowUpResponse(
-    val questions: List<String>
-)
-
-// SSE Chat Events
 sealed class ChatEvent {
     data class Info(val conversation_id: Int?) : ChatEvent()
     data class Status(val message: String) : ChatEvent()
@@ -40,35 +30,6 @@ sealed class ChatEvent {
     data class Sources(val sources: List<SourceDto>) : ChatEvent()
     data class Done(val message: String? = null) : ChatEvent()
     data class Error(val message: String) : ChatEvent()
-}
-
-fun parseChatEvent(data: String): ChatEvent {
-    return try {
-        val json = JsonParser.parseString(data).asJsonObject
-        val type = json.get("type")?.asString ?: return ChatEvent.Error("Unknown event type")
-        val gson = Gson()
-        when (type) {
-            "info" -> {
-                val idElem = json.get("conversation_id")
-                val conversationId = if (idElem != null && !idElem.isJsonNull) idElem.asInt else null
-                ChatEvent.Info(conversationId)
-            }
-            "status" -> ChatEvent.Status(json.get("message")?.asString ?: "")
-            "content" -> ChatEvent.Content(json.get("content")?.asString ?: "")
-            "sources" -> {
-                val sources = gson.fromJson(json.get("sources"), Array<SourceDto>::class.java).toList()
-                ChatEvent.Sources(sources)
-            }
-            "done" -> {
-                val message = json.get("message")?.asString
-                ChatEvent.Done(message)
-            }
-            "error" -> ChatEvent.Error(json.get("message")?.asString ?: "Unknown error")
-            else -> ChatEvent.Error("Unknown event type: $type")
-        }
-    } catch (e: Exception) {
-        ChatEvent.Error("Failed to parse SSE event: ${e.message}")
-    }
 }
 
 data class SourceDto(
@@ -85,12 +46,4 @@ data class SourceImageDto(
     val page: Int,
     val width: Int,
     val height: Int
-)
-
-data class Source(
-    val content: String,
-    val source: String,
-    val url: String? = null,
-    val type: String = "document",
-    val relevance_score: Float? = null
 )

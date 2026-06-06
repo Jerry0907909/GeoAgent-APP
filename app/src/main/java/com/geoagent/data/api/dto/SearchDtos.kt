@@ -11,6 +11,7 @@ data class DeepSearchRequest(
 
 sealed class SearchEvent {
     data class Plan(val queries: List<String>) : SearchEvent()
+    data class Status(val message: String) : SearchEvent()
     data class Search(val results: List<SearchResultItem>) : SearchEvent()
     data class Extract(val content: String) : SearchEvent()
     data class Answer(val content: String) : SearchEvent()
@@ -40,6 +41,7 @@ fun parseSearchEvent(data: String): SearchEvent {
                 val queries = gson.fromJson(json.get("queries"), Array<String>::class.java).toList()
                 SearchEvent.Plan(queries)
             }
+            "status" -> SearchEvent.Status(json.get("message")?.asString ?: "")
             "search" -> {
                 val results = gson.fromJson(json.get("results"), Array<SearchResultItem>::class.java).toList()
                 SearchEvent.Search(results)

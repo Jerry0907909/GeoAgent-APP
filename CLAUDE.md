@@ -4,47 +4,74 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GeoAgent Android is a mobile client for an AI geology literature Q&A system, communicating with a FastAPI backend via HTTP + SSE. The project target is Kotlin + Jetpack Compose with MVVM + Clean Architecture, but is currently in early stages — only a template XML-based MainActivity exists.
+GeoAgent Android is a mobile client for an AI geology literature Q&A system, communicating with a FastAPI backend via HTTP + SSE. Built with Kotlin + Jetpack Compose, single-module MVVM + Repository pattern, Koin DI.
 
 ## Build & Test Commands
 
 ```bash
-# Build debug APK
-./gradlew assembleDebug
-
-# Run unit tests (JVM)
-./gradlew test
-
-# Run instrumented tests (requires emulator/device)
-./gradlew connectedAndroidTest
-
-# Emulator port forwarding (so emulator can reach backend at localhost:8000)
-adb reverse tcp:8000 tcp:8000
+./gradlew assembleDebug          # Build debug APK
+./gradlew installDebug           # Build + install to emulator/device
+./gradlew test                   # JVM unit tests (no device needed)
+./gradlew connectedAndroidTest   # Instrumented tests (needs emulator/device)
+adb reverse tcp:8000 tcp:8000    # Emulator ↔ host backend
 ```
 
-- Gradle 9.3.1, AGP 9.1.1, JDK 17+
-- Target SDK 36, Min SDK 33, Java 11 bytecode
-- Backend base URL: `http://10.0.2.2:8000/api/` (Android emulator alias for host localhost)
+- JDK 17+, Gradle 9.3.1, AGP 9.1.1, Kotlin 2.0.0
+- Target SDK 36, Min SDK 33
+- Backend base URL: `http://10.0.2.2:8000/api/` (defined in `di/NetworkModule.kt`)
 
-## Architecture (Planned)
+## Architecture
 
-The `Android-docs/` directory contains the full technical specification for what needs to be built:
+**Single-module** (`:app`), package `com.geoagent`.
 
-| Doc | Content |
-|-----|---------|
-| `TECHNICAL-SPEC.md` | Clean Architecture layers, Hilt DI setup, SSE client, auth interceptor, Room/DataStore schemas, dependency versions |
-| `UI-SPEC.md` | DeepSeek-style design system (colors, typography, spacing, radii), per-screen Compose layouts, interaction specs |
-| `API-ENDPOINTS.md` | All backend REST + SSE endpoints with request/response DTOs |
-| `README.md` | Project overview, module structure, external service dependencies (SiliconFlow, Tavily, QQ SMTP, MySQL, Redis, ChromaDB) |
+**Koin DI** — NOT Hilt. Five modules loaded in `GeoAgentApp.onCreate()`:
+- `networkModule` — OkHttp (with AuthInterceptor + TokenAuthenticator + logging + cache), Retrofit (Gson), GeoAgentApi, SseClient, SearchSseClient
+- `dataStoreModule` — TokenDataStore, UserPrefsDataStore, AvatarLocalStore (DataStore Preferences, singletons)
+- `databaseModule` — Empty placeholder. Room is **not used** due to KSP/Kotlin 2.0/AGP 9.x compat issues.
+- `repositoryModule` — Binds Auth/Chat/Document/Search repository interfaces to implementations
+- `viewModelModule` — Five ViewModels: Auth, Chat, ChatList, Document, Settings
 
-**Target package:** `com.geoagent` (note: current template uses `com.example.geoagent`)
+**Navigation** — Jetpack Navigation Compose with **dual NavHost**:
+- Outer NavHost (`GeoNavHost.kt`): Splash → Login → Register → ForgotPassword → Main
+- Inner NavHost (`MainScreen.kt`): Chat, Documents, Settings inside a ModalNavigationDrawer
+- Start destination: `chat/detail/0` (new/blank chat), not chat list
+- Routes defined in `navigation/Routes.kt`
 
-**Key planned dependencies not yet in `libs.versions.toml`:** Compose BOM, Hilt, Navigation Compose, Retrofit, OkHttp EventSource, Room, DataStore, Coil.
+**SSE** — Two OkHttp-based SSE clients (not Retrofit):
+- `SseClient` — chat streaming (`POST chat/stream`), emits `Flow<ChatEvent>`
+- `SearchSseClient` — search streaming (`POST search/deep`), emits `Flow<SearchEvent>`
+- Uses `com.launchdarkly:okhttp-eventsource:4.1.1`, not OkHttp's built-in SSE
 
-## Design System
+**Agent system** (`agent/`) — Local keyword-based command routing:
+- `IntentRouter` — Multi-tier scoring: L1 exact prefix match (`/convert`), L2 keyword hit counting, fallback null
+- `UnitConversionAgent` — Local geological unit conversion (length, pressure, temperature, angle) without network calls
+- ChatViewModel routes messages through IntentRouter first; if a command matches, it dispatches locally instead of calling the SSE API
 
-DeepSeek-inspired theme with brand blue `#3964fe`, soft blue `#edf3fe`, and pill-shaped components. Full color tokens, typography scale, and component specs are in `UI-SPEC.md`.
+**Embedded server** — NanoHTTPD mock server at `127.0.0.1:8080`, **disabled by default** (`USE_EMBEDDED_SERVER = false` in `GeoAgentApp.kt`). The real FastAPI backend at `10.0.2.2:8000` is the target.
 
-## Current State
+## Theme System
 
-The app currently contains a single `MainActivity` using XML layout (`ConstraintLayout` + "Hello World" `TextView`) with edge-to-edge insets handling. All Compose, navigation, DI, and feature modules described in the docs still need to be implemented.
+- `AnimatedGeoAgentTheme` in `ui/theme/Theme.kt` — crossfade transition between light/dark
+- Colors accessed via `GeoAgentTheme.geoPalette` CompositionLocal, not direct static imports
+- `AppThemeMode` enum: LIGHT, DARK, SYSTEM
+- DeepSeek-inspired design: brand blue `#3964fe`, soft blue `#edf3fe`, pill-shaped components
+
+## Tech Stack Gotchas
+
+- **Markdown renderer**: `com.mikepenz:multiplatform-markdown-renderer:0.26.0` — do NOT bump to 0.27.x, it doesn't exist on Maven Central
+- **Network security**: Cleartext HTTP allowed only for `localhost` and `10.0.2.2` via `network_security_config.xml`
+- **Room** is declared in `libs.versions.toml` but NOT used in dependencies — not integrated
+- **No KSP** — Room and other annotation processors that need KSP are blocked by Kotlin 2.0 + AGP 9.x compat
+- **UseCase layer** — Referenced in docs but not implemented; features go directly through Repository → ViewModel
+
+## Docs Priority
+
+- **README.md** — Most up-to-date source of truth for project structure and features
+- **`Android-docs/`** — Design specs that have partially drifted from implementation. `API-ENDPOINTS.md` is reliable for DTO shapes; `UI-SPEC.md` describes the target design but actual theme token names differ.
+- **AGENTS.md** — Contains additional architecture notes and style conventions
+
+## Style Conventions
+
+- No comments unless a business rule or non-obvious constraint needs explaining
+- Compose previews are rarely used — don't add them by default
+- Theme colors accessed via CompositionLocal, not direct static imports

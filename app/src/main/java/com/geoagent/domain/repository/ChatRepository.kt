@@ -13,4 +13,5 @@ interface ChatRepository {
     suspend fun followUp(question: String, answer: String): Result<List<String>>
     suspend fun listConversations(limit: Int = 50): Result<List<Conversation>>
     suspend fun getConversationMessages(conversationId: Int): Result<List<Message>>
+    fun saveMessage(conversationId: Int, message: Message)
 }

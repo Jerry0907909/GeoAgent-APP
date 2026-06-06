@@ -2,112 +2,119 @@ package com.geoagent.data.repository
 
 import android.content.Context
 import android.net.Uri
-import com.geoagent.data.api.GeoAgentApi
+import com.geoagent.data.api.SiliconFlowEmbeddingClient
 import com.geoagent.data.api.dto.*
+import com.geoagent.data.local.DocumentChunker
+import com.geoagent.data.local.DocumentParser
+import com.geoagent.data.local.DocumentStore
+import com.geoagent.data.local.LocalDocument
 import com.geoagent.domain.repository.DocumentRepository
-import com.google.gson.Gson
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.HttpException
+import java.util.UUID
 
 class DocumentRepositoryImpl(
-    private val api: GeoAgentApi
+    private val documentStore: DocumentStore,
+    private val embeddingClient: SiliconFlowEmbeddingClient
 ) : DocumentRepository {
-
-    private val gson = Gson()
-
-    private fun httpErrorMessage(e: Exception, fallback: String): String {
-        if (e is HttpException) {
-            val detail = runCatching {
-                val raw = e.response()?.errorBody()?.string().orEmpty()
-                if (raw.isBlank()) return@runCatching null
-                gson.fromJson(raw, Map::class.java)["detail"]?.toString()
-            }.getOrNull()
-            if (!detail.isNullOrBlank()) return detail
-        }
-        return e.message ?: fallback
-    }
 
     override suspend fun getDocuments(collection: String?): Result<List<DocumentDto>> {
         return try {
-            val response = api.getDocuments(collection)
-            Result.success(response.documents.map { it.toDocumentDto() })
+            val docs = documentStore.getDocumentsSnapshot()
+            Result.success(docs.map { it.toDto() })
         } catch (e: Exception) {
-            Result.failure(Exception(httpErrorMessage(e, "加载文档列表失败"), e))
+            Result.failure(e)
         }
     }
 
     override suspend fun uploadFile(
         file: MultipartBody.Part, collection: String?
     ): Result<DocumentUploadResponse> {
-        return try {
-            val collectionBody = collection?.toRequestBody("text/plain".toMediaType())
-            Result.success(api.uploadFile(file, collectionBody))
-        } catch (e: Exception) {
-            Result.failure(Exception(httpErrorMessage(e, "上传失败"), e))
-        }
+        return Result.failure(Exception("请使用文件选择器上传"))
     }
 
     override suspend fun uploadFileFromUri(
         context: Context, uri: Uri
     ): Result<DocumentUploadResponse> {
         return try {
-            val inputStream = context.contentResolver.openInputStream(uri)
-                ?: return Result.failure(Exception("无法读取文件"))
-            val bytes = inputStream.use { it.readBytes() }
-
-            var fileName = uri.lastPathSegment ?: "file"
+            var fileName = uri.lastPathSegment ?: "document"
+            var fileSize = 0L
             context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) {
                     val nameIdx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                    if (nameIdx >= 0) {
-                        cursor.getString(nameIdx)?.let { fileName = it }
-                    }
+                    if (nameIdx >= 0) cursor.getString(nameIdx)?.let { fileName = it }
+                    val sizeIdx = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                    if (sizeIdx >= 0) fileSize = cursor.getLong(sizeIdx)
                 }
             }
 
-            val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
-            val requestBody = bytes.toRequestBody(mimeType.toMediaType())
-            val part = MultipartBody.Part.createFormData("file", fileName, requestBody)
+            DocumentParser.init(context)
+            val result = DocumentParser.parse(context, uri, fileName)
+            result.fold(
+                onSuccess = { text ->
+                    val docId = UUID.randomUUID().toString().take(8)
+                    val chunks = DocumentChunker.chunk(text)
+                    val doc = LocalDocument(
+                        id = docId,
+                        name = fileName,
+                        fileType = fileName.substringAfterLast('.', "unknown"),
+                        sizeBytes = fileSize,
+                        chunkCount = chunks.size
+                    )
 
-            Result.success(api.uploadFile(part, null))
+                    // Generate embeddings for all chunks
+                    val chunkTexts = chunks.map { it.text }
+                    val embeddings = if (chunkTexts.isNotEmpty()) {
+                        embeddingClient.embed(chunkTexts).getOrDefault(emptyList())
+                    } else emptyList()
+
+                    documentStore.addDocument(doc, chunks, embeddings)
+                    Result.success(DocumentUploadResponse(
+                        success = true,
+                        document_id = docId,
+                        message = "解析成功：$fileName，${chunks.size}块，${embeddings.size}向量",
+                        num_chunks = chunks.size
+                    ))
+                },
+                onFailure = { e ->
+                    Result.failure(Exception(e.message ?: "文档解析失败"))
+                }
+            )
         } catch (e: Exception) {
-            Result.failure(Exception(httpErrorMessage(e, "上传失败"), e))
+            Result.failure(Exception(e.message ?: "上传失败"))
         }
     }
 
     override suspend fun deleteDocument(docId: String): Result<Unit> {
         return try {
-            val separator = docId.indexOf("::")
-            val response = if (separator > 0) {
-                val collection = docId.substring(0, separator)
-                val sourceName = docId.substring(separator + 2)
-                api.deleteDocumentBySource(sourceName, collection)
-            } else {
-                return Result.failure(Exception("无效的文档标识"))
-            }
-            if (response.success) Result.success(Unit)
-            else Result.failure(Exception(response.message))
+            documentStore.deleteDocument(docId)
+            Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(Exception(httpErrorMessage(e, "删除失败"), e))
+            Result.failure(e)
         }
     }
 
     override suspend fun getCollections(): Result<List<CollectionDto>> {
-        return try {
-            Result.success(api.getCollections().collections)
-        } catch (e: Exception) {
-            Result.failure(Exception(httpErrorMessage(e, "加载知识库失败"), e))
-        }
+        return Result.success(listOf(CollectionDto(name = "local", document_count = 0, created_at = "")))
     }
 
     override suspend fun getDocumentContent(source: String, collection: String?): Result<String> {
         return try {
-            val response = api.getDocumentContent(source, collection)
-            Result.success(response.content)
+            val chunks = documentStore.getChunks(source)
+            Result.success(chunks.joinToString("\n\n") { it.text })
         } catch (e: Exception) {
-            Result.failure(Exception(httpErrorMessage(e, "加载文档内容失败"), e))
+            Result.failure(e)
         }
     }
+
+    private fun LocalDocument.toDto() = DocumentDto(
+        id = id,
+        name = name,
+        source = name,
+        type = fileType,
+        size = sizeBytes,
+        created_at = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(createdAt)),
+        collection = "local"
+    )
 }
+
+

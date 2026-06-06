@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AI assistant message: left-aligned, neutral surface bubble -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="start"
+    android:orientation="vertical"
+    android:paddingVertical="6dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="@dimen/bubble_max_width"
+        app:cardBackgroundColor="@color/bubble_assistant_bg"
+        app:cardCornerRadius="@dimen/radius_lg"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/outline_subtle"
+        app:strokeWidth="0.5dp">
+
+        <TextView
+            android:id="@+id/tv_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/bubble_padding_h"
+            android:paddingVertical="@dimen/bubble_padding_v"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/on_background"
+            android:lineSpacingExtra="3dp"
+            android:autoLink="web"
+            android:linksClickable="true" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:id="@+id/layout_sources"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:orientation="vertical"
+        android:visibility="gone" />
+</LinearLayout>

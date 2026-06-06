@@ -16,7 +16,10 @@ data class Message(
     val role: String,
     val content: String,
     val sources: List<SourceDto> = emptyList(),
-    val timestamp: Long = System.currentTimeMillis()
+    val imageBase64: String? = null,
+    val timestamp: Long = System.currentTimeMillis(),
+    val agentName: String? = null,
+    val agentResultJson: String? = null
 ) {
     companion object {
         const val ROLE_USER = "user"

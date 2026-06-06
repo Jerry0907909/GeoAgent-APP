@@ -14,6 +14,16 @@
     <string name="no_account_register">没有账号？立即注册</string>
     <string name="has_account_login">已有账号？去登录</string>
     <string name="username">用户名</string>
+    <string name="username_or_email">用户名或邮箱</string>
+    <string name="login_subtitle">地质文献智能问答平台</string>
+    <string name="login_mode_password">密码登录</string>
+    <string name="login_mode_email_code">验证码登录</string>
+    <string name="switch_account">切换账号</string>
+    <string name="account_security">账号与安全</string>
+    <string name="appearance">外观</string>
+    <string name="section_account">账户</string>
+    <string name="section_app">应用</string>
+    <string name="section_about">关于</string>
 
     <!-- Navigation -->
     <string name="nav_chat">对话</string>
@@ -26,11 +36,19 @@
     <string name="send">发送</string>
     <string name="chat_mode">对话</string>
     <string name="rag_mode">RAG</string>
+    <string name="mode_chat">对话</string>
+    <string name="mode_rag">RAG</string>
+    <string name="mode_hint_chat">适合日常对话，即时响应</string>
+    <string name="mode_hint_rag">基于知识库检索，精准回答</string>
+    <string name="composer_hint">发消息或按住发送键提问…</string>
+    <string name="drawer_open">打开菜单</string>
+    <string name="new_chat">新对话</string>
     <string name="deep_thinking">深度思考</string>
     <string name="smart_search">智能搜索</string>
     <string name="copy">复制</string>
     <string name="regenerate">重新生成</string>
-    <string name="empty_chat_hint">使用快速模式开始对话</string>
+    <string name="empty_chat_hint_chat">使用智能对话模式开始对话</string>
+    <string name="empty_chat_hint_rag">使用 RAG 模式开始对话</string>
 
     <!-- Documents -->
     <string name="upload_document">上传文档</string>
