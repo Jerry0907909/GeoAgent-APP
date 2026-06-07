@@ -13,6 +13,7 @@ import com.geoagent.domain.repository.AuthRepository
 import com.geoagent.ui.TransitionHelper
 import com.geoagent.ui.auth.LoginActivity
 import com.geoagent.ui.documents.DocumentListActivity
+import com.geoagent.ui.motion.MotionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -26,6 +27,7 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_settings)
 
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
+            MotionUtils.press(it)
             finish()
             TransitionHelper.backward(this)
         }
@@ -36,18 +38,22 @@ class SettingsActivity : AppCompatActivity() {
         bindRow(R.id.row_version, getString(R.string.version), BuildConfig.VERSION_NAME, showChevron = false)
 
         findViewById<View>(R.id.row_account).setOnClickListener {
+            MotionUtils.press(it)
             startActivity(Intent(this, AccountSecurityActivity::class.java))
             TransitionHelper.forward(this)
         }
         findViewById<View>(R.id.row_appearance).setOnClickListener {
+            MotionUtils.press(it)
             startActivity(Intent(this, AppearanceActivity::class.java))
             TransitionHelper.forward(this)
         }
         findViewById<View>(R.id.row_documents).setOnClickListener {
+            MotionUtils.press(it)
             startActivity(Intent(this, DocumentListActivity::class.java))
             TransitionHelper.forward(this)
         }
         findViewById<TextView>(R.id.btn_logout).setOnClickListener {
+            MotionUtils.press(it)
             lifecycleScope.launch {
                 authRepository.logout()
                 startActivity(Intent(this@SettingsActivity, LoginActivity::class.java).apply {

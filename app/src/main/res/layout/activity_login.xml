@@ -9,86 +9,50 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="80dp"
-        android:paddingBottom="56dp">
+        android:paddingTop="58dp"
+        android:paddingBottom="40dp">
 
-        <!-- ═══ Brand ═══ -->
-        <TextView
-            android:id="@+id/tv_brand"
+        <LinearLayout
+            android:id="@+id/layout_brand"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="GeoAgent"
-            android:textColor="@color/on_background"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.04"
+            android:gravity="center"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/iv_brand_logo"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="@null"
+                android:src="@drawable/geoagent_icon_symbol" />
+
+            <TextView
+                android:id="@+id/tv_brand"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.02"
+                android:text="GeoAgent"
+                android:textColor="@color/on_background"
+                android:textSize="30sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tv_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="7dp"
             android:text="地质文献 · 智能问答"
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
-            android:letterSpacing="0.08"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_brand" />
+            app:layout_constraintTop_toBottomOf="@id/layout_brand" />
 
-        <!-- ═══ Tab Row ═══ -->
-        <TextView
-            android:id="@+id/tab_login"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="44dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="登录"
-            android:textColor="@color/on_background"
-            android:textSize="17sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/tab_center_guide"
-            app:layout_constraintHorizontal_chainStyle="packed"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_subtitle" />
-
-        <Space
-            android:id="@+id/tab_center_guide"
-            android:layout_width="48dp"
-            android:layout_height="0dp"
-            app:layout_constraintEnd_toStartOf="@id/tab_register"
-            app:layout_constraintStart_toEndOf="@id/tab_login"
-            app:layout_constraintTop_toTopOf="@id/tab_login" />
-
-        <TextView
-            android:id="@+id/tab_register"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:text="注册"
-            android:textColor="@color/text_muted"
-            android:textSize="17sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/tab_center_guide"
-            app:layout_constraintTop_toTopOf="@id/tab_login" />
-
-        <!-- Tab Indicator: centered under tab_login by default -->
-        <View
-            android:id="@+id/tab_indicator"
-            android:layout_width="24dp"
-            android:layout_height="3dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_tab_indicator_soft"
-            app:layout_constraintEnd_toEndOf="@id/tab_login"
-            app:layout_constraintStart_toStartOf="@id/tab_login"
-            app:layout_constraintTop_toBottomOf="@id/tab_login" />
-
-        <!-- ═══ LOGIN FORM ═══ -->
         <LinearLayout
             android:id="@+id/layout_login"
             android:layout_width="0dp"
@@ -97,235 +61,254 @@
             android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tab_indicator">
+            app:layout_constraintTop_toBottomOf="@id/tv_subtitle">
 
-            <!-- Login method toggle -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <FrameLayout
+                android:id="@+id/login_method_switch"
+                android:layout_width="match_parent"
+                android:layout_height="34dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="10dp"
-                android:orientation="horizontal">
+                android:layout_marginStart="52dp"
+                android:layout_marginEnd="52dp"
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/bg_auth_segment_track">
 
-                <TextView
-                    android:id="@+id/pill_code_login"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:padding="6dp"
-                    android:text="验证码登录"
-                    android:textColor="@color/deepseek_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                <View
+                    android:id="@+id/login_method_indicator"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/bg_auth_segment_selected" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="6dp"
-                    android:text="·"
-                    android:textColor="@color/text_muted"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/pill_password_login"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:padding="6dp"
-                    android:text="密码登录"
-                    android:textColor="@color/text_muted"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <!-- Email Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_email"
-                style="@style/Widget.GeoAgent.AuthInput"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="12dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_email"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@null"
-                    android:gravity="center_vertical"
-                    android:hint="邮箱地址"
-                    android:inputType="textEmailAddress"
-                    android:paddingStart="24dp"
-                    android:paddingEnd="24dp"
-                    android:textColor="@color/on_background"
-                    android:textColorHint="@color/text_muted"
-                    android:textSize="15sp" />
-            </com.google.android.material.card.MaterialCardView>
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
-            <!-- Code Card (inline button) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_code"
-                style="@style/Widget.GeoAgent.AuthInput"
+                    <TextView
+                        android:id="@+id/pill_code_login"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="验证码登录"
+                        android:textColor="@color/deepseek_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/pill_password_login"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="密码登录"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/login_primary_field_slot"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="12dp">
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <LinearLayout
+                    android:id="@+id/card_email"
+                    style="@style/Widget.GeoAgent.AuthLineInput"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_code"
-                        android:layout_width="0dp"
+                        android:id="@+id/et_email"
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@null"
                         android:gravity="center_vertical"
-                        android:hint="验证码"
-                        android:inputType="number"
-                        android:maxLength="6"
-                        android:paddingStart="24dp"
-                        android:paddingEnd="8dp"
+                        android:hint="邮箱地址"
+                        android:inputType="textEmailAddress"
+                        android:paddingStart="0dp"
+                        android:paddingEnd="0dp"
                         android:textColor="@color/on_background"
                         android:textColorHint="@color/text_muted"
-                        android:textSize="15sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/btn_send_code"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        android:textSize="15sp" />
+                </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/btn_send_code"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="20dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:text="获取验证码"
-                        android:textColor="@color/deepseek_primary"
-                        android:textSize="13sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Account Card (password mode) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_account"
-                style="@style/Widget.GeoAgent.AuthInput"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="12dp"
-                android:visibility="gone">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_account"
+                <LinearLayout
+                    android:id="@+id/card_account"
+                    style="@style/Widget.GeoAgent.AuthLineInput"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@null"
-                    android:gravity="center_vertical"
-                    android:hint="用户名"
-                    android:inputType="text"
-                    android:paddingStart="24dp"
-                    android:paddingEnd="24dp"
-                    android:textColor="@color/on_background"
-                    android:textColorHint="@color/text_muted"
-                    android:textSize="15sp" />
-            </com.google.android.material.card.MaterialCardView>
+                    android:visibility="invisible">
 
-            <!-- Password Card (password mode, inline forgot link) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_password"
-                style="@style/Widget.GeoAgent.AuthInput"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_account"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@null"
+                        android:gravity="center_vertical"
+                        android:hint="用户名"
+                        android:inputType="text"
+                        android:paddingStart="0dp"
+                        android:paddingEnd="0dp"
+                        android:textColor="@color/on_background"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="15sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/login_secondary_field_slot"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="12dp"
-                android:visibility="gone">
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp"
+                android:layout_marginTop="12dp">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <LinearLayout
+                    android:id="@+id/card_code"
+                    style="@style/Widget.GeoAgent.AuthLineInput"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_password"
-                        android:layout_width="0dp"
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_code"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:background="@null"
+                            android:gravity="center_vertical"
+                            android:hint="验证码"
+                            android:inputType="number"
+                            android:maxLength="6"
+                            android:paddingStart="0dp"
+                            android:paddingEnd="8dp"
+                            android:textColor="@color/on_background"
+                            android:textColorHint="@color/text_muted"
+                            android:textSize="15sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/btn_send_code"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:id="@+id/btn_send_code"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:text="获取验证码"
+                            android:textColor="@color/deepseek_primary"
+                            android:textSize="13sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/card_password"
+                    style="@style/Widget.GeoAgent.AuthLineInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="invisible">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:background="@null"
-                        android:gravity="center_vertical"
-                        android:hint="密码"
-                        android:inputType="textPassword"
-                        android:paddingStart="24dp"
-                        android:paddingEnd="8dp"
-                        android:textColor="@color/on_background"
-                        android:textColorHint="@color/text_muted"
-                        android:textSize="15sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/tv_forgot"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        android:visibility="visible">
 
-                    <TextView
-                        android:id="@+id/tv_forgot"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="20dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:text="忘记密码？"
-                        android:textColor="@color/deepseek_primary"
-                        android:textSize="13sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </com.google.android.material.card.MaterialCardView>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_password"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:background="@null"
+                            android:gravity="center_vertical"
+                            android:hint="密码"
+                            android:inputType="textPassword"
+                            android:paddingStart="0dp"
+                            android:paddingEnd="8dp"
+                            android:textColor="@color/on_background"
+                            android:textColorHint="@color/text_muted"
+                            android:textSize="15sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/tv_forgot"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Submit Button -->
+                        <TextView
+                            android:id="@+id/tv_forgot"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:text="忘记密码？"
+                            android:textColor="@color/deepseek_primary"
+                            android:textSize="13sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
+            </FrameLayout>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_submit"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="28dp"
-                android:elevation="4dp"
-                android:text="登 录"
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp"
+                android:layout_marginTop="30dp"
+                android:elevation="1dp"
+                android:text="登录"
                 android:textAllCaps="false"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/deepseek_primary"
-                app:cornerRadius="26dp" />
+                app:cornerRadius="25dp" />
+
+            <TextView
+                android:id="@+id/tv_to_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="18dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="没有账号？立即注册"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- ═══ REGISTER FORM ═══ -->
         <LinearLayout
             android:id="@+id/layout_register"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="30dp"
             android:orientation="vertical"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tab_indicator">
+            app:layout_constraintTop_toBottomOf="@id/tv_subtitle">
 
-            <!-- Username -->
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:id="@+id/card_reg_username"
-                style="@style/Widget.GeoAgent.AuthInput"
+                style="@style/Widget.GeoAgent.AuthLineInput"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp">
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_reg_username"
@@ -335,22 +318,21 @@
                     android:gravity="center_vertical"
                     android:hint="用户名"
                     android:inputType="text"
-                    android:paddingStart="24dp"
-                    android:paddingEnd="24dp"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
                     android:textColor="@color/on_background"
                     android:textColorHint="@color/text_muted"
                     android:textSize="15sp" />
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Email -->
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:id="@+id/card_reg_email"
-                style="@style/Widget.GeoAgent.AuthInput"
+                style="@style/Widget.GeoAgent.AuthLineInput"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="12dp">
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp"
+                android:layout_marginTop="10dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_reg_email"
@@ -360,22 +342,21 @@
                     android:gravity="center_vertical"
                     android:hint="邮箱地址"
                     android:inputType="textEmailAddress"
-                    android:paddingStart="24dp"
-                    android:paddingEnd="24dp"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
                     android:textColor="@color/on_background"
                     android:textColorHint="@color/text_muted"
                     android:textSize="15sp" />
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Password -->
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:id="@+id/card_reg_password"
-                style="@style/Widget.GeoAgent.AuthInput"
+                style="@style/Widget.GeoAgent.AuthLineInput"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="12dp">
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp"
+                android:layout_marginTop="10dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_reg_password"
@@ -385,22 +366,21 @@
                     android:gravity="center_vertical"
                     android:hint="设置密码"
                     android:inputType="textPassword"
-                    android:paddingStart="24dp"
-                    android:paddingEnd="24dp"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
                     android:textColor="@color/on_background"
                     android:textColorHint="@color/text_muted"
                     android:textSize="15sp" />
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Code Card (inline) -->
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:id="@+id/card_reg_code"
-                style="@style/Widget.GeoAgent.AuthInput"
+                style="@style/Widget.GeoAgent.AuthLineInput"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="12dp">
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp"
+                android:layout_marginTop="10dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -415,7 +395,7 @@
                         android:hint="邮箱验证码"
                         android:inputType="number"
                         android:maxLength="6"
-                        android:paddingStart="24dp"
+                        android:paddingStart="0dp"
                         android:paddingEnd="8dp"
                         android:textColor="@color/on_background"
                         android:textColorHint="@color/text_muted"
@@ -429,7 +409,6 @@
                         android:id="@+id/btn_reg_send_code"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="20dp"
                         android:clickable="true"
                         android:focusable="true"
                         android:text="获取验证码"
@@ -439,9 +418,8 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Agreement -->
             <LinearLayout
                 android:id="@+id/layout_agreement"
                 android:layout_width="match_parent"
@@ -449,7 +427,7 @@
                 android:layout_marginStart="32dp"
                 android:layout_marginEnd="32dp"
                 android:layout_marginTop="14dp"
-                android:gravity="center_vertical"
+                android:gravity="center"
                 android:orientation="horizontal">
 
                 <com.google.android.material.checkbox.MaterialCheckBox
@@ -459,47 +437,49 @@
                     android:minWidth="0dp"
                     android:minHeight="0dp"
                     android:paddingStart="0dp"
-                    android:paddingEnd="6dp"
+                    android:paddingEnd="4dp"
                     app:buttonTint="@color/checkbox_agreement_tint"
                     app:useMaterialThemeColors="false" />
 
                 <TextView
                     android:id="@+id/tv_agreement"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:lineSpacingExtra="2dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:ellipsize="end"
+                    android:maxWidth="300dp"
+                    android:singleLine="true"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- Register Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_register"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="24dp"
-                android:elevation="4dp"
-                android:text="注 册"
+                android:layout_height="50dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp"
+                android:layout_marginTop="22dp"
+                android:elevation="1dp"
+                android:text="注册"
                 android:textAllCaps="false"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/deepseek_primary"
-                app:cornerRadius="26dp" />
+                app:cornerRadius="25dp" />
 
             <TextView
                 android:id="@+id/tv_back_login"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="18dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:text="已有账号？立即登录"
-                android:textColor="@color/deepseek_primary"
-                android:textSize="14sp" />
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,31 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="@dimen/spacing_2xl">
+    android:background="@color/background">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textColor="@color/corp_primary"
-        android:textSize="36sp"
-        android:textStyle="bold" />
+    <ImageView
+        android:id="@+id/iv_geoagent_logo"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:contentDescription="@string/app_name"
+        android:scaleType="fitCenter"
+        android:src="@drawable/geoagent_logo"
+        app:layout_constraintBottom_toTopOf="@id/logo_loading"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_sm"
-        android:text="企业级地质文献智能问答"
-        android:textAppearance="@style/TextAppearance.GeoAgent.Caption"
-        android:textSize="15sp" />
-
-    <ProgressBar
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_2xl"
-        android:indeterminateTint="@color/corp_primary" />
-</LinearLayout>
+    <com.geoagent.ui.splash.LogoPulseLoadingView
+        android:id="@+id/logo_loading"
+        android:layout_width="96dp"
+        android:layout_height="14dp"
+        android:layout_marginTop="18dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/iv_geoagent_logo"
+        app:layout_constraintStart_toStartOf="@id/iv_geoagent_logo"
+        app:layout_constraintTop_toBottomOf="@id/iv_geoagent_logo" />
+</androidx.constraintlayout.widget.ConstraintLayout>

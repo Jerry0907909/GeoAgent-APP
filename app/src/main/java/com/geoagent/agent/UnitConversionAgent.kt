@@ -93,8 +93,8 @@ class UnitConversionAgent {
                 if (fromUnit.category != toUnit.category) continue
 
                 // Try patterns: "3000米 英尺", "3000 米 英尺", "3000米等于多少英尺"
-                for (fromAlias in fromUnit.aliases.filter { it.length >= 2 }) {
-                    for (toAlias in toUnit.aliases.filter { it.length >= 2 }) {
+                for (fromAlias in fromUnit.aliases) {
+                    for (toAlias in toUnit.aliases) {
                         // Pattern: "3000米 英尺"
                         val regex = Regex(
                             """^(\d+\.?\d*)\s*${Regex.escape(fromAlias)}\s+${Regex.escape(toAlias)}\s*${'$'}""",

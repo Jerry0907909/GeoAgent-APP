@@ -9,12 +9,23 @@
     <color name="on_primary_soft">#3964FE</color>
     <color name="on_primary_container">@color/on_primary_soft</color>
 
+    <!-- GeoAgent brand -->
+    <color name="geoagent_blue">#2367F2</color>
+    <color name="geoagent_blue_dark">#12378C</color>
+    <color name="geoagent_blue_light">#7DB8FF</color>
+    <color name="geoagent_blue_air">#8FBEFF</color>
+    <color name="geoagent_red">#FF3344</color>
+    <color name="geoagent_red_air">#FF8A8F</color>
+    <color name="geoagent_yellow">#FFC400</color>
+    <color name="geoagent_yellow_air">#FFE28A</color>
+    <color name="geoagent_ink">#050A1F</color>
+
     <!-- Secondary: muted -->
     <color name="secondary">#81858C</color>
     <color name="secondary_container">#F3F4F6</color>
 
     <!-- Background & Surface -->
-    <color name="background">#F9FAFB</color>
+    <color name="background">#FFFFFF</color>
     <color name="surface">#FFFFFF</color>
     <color name="surface_elevated">#FFFFFF</color>
 
@@ -46,7 +57,7 @@
 
     <!-- Status bar -->
     <color name="status_bar_bg">#FFFFFF</color>
-    <color name="nav_bar_bg">#F9FAFB</color>
+    <color name="nav_bar_bg">#FFFFFF</color>
     <color name="overlay">#66000000</color>
 
     <!-- ===== Legacy aliases ===== -->

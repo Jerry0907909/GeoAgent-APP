@@ -15,6 +15,7 @@ import com.geoagent.R
 import com.geoagent.data.api.dto.DocumentDto
 import com.geoagent.domain.repository.DocumentRepository
 import com.geoagent.ui.TransitionHelper
+import com.geoagent.ui.motion.MotionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
@@ -43,6 +44,7 @@ class DocumentListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_document_list)
 
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
+            MotionUtils.press(it)
             finish()
             TransitionHelper.backward(this)
         }
@@ -54,10 +56,12 @@ class DocumentListActivity : AppCompatActivity() {
             onDelete = { doc -> confirmDelete(doc) }
         )
         rv.layoutManager = LinearLayoutManager(this)
+        MotionUtils.setupRecyclerItemAnimator(rv)
         rv.adapter = adapter
 
         swipe.setOnRefreshListener { loadDocuments() }
         findViewById<FloatingActionButton>(R.id.fab_upload).setOnClickListener {
+            MotionUtils.press(it)
             uploadPicker.launch(arrayOf(
                 "application/pdf",
                 "text/plain",

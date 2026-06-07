@@ -26,6 +26,8 @@
         <item name="android:navigationBarColor">@color/nav_bar_bg</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowSplashScreenBackground">@color/background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
 
         <!-- Cards -->
         <item name="materialCardViewStyle">@style/Widget.GeoAgent.Card</item>

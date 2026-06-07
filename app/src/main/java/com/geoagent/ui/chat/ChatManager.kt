@@ -17,6 +17,7 @@ import com.geoagent.domain.repository.AuthRepository
 import com.geoagent.domain.repository.ChatRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,6 +79,8 @@ class ChatManager(
     private val sessionContextManager = SessionContextManager()
 
     private var sseJob: Job? = null
+    private var streamRenderJob: Job? = null
+    private val pendingStreamContent = StringBuilder()
 
     fun loadConversation(conversationId: Int) {
         if (conversationId <= 0) {
@@ -85,6 +88,7 @@ class ChatManager(
             return
         }
         sseJob?.cancel()
+        stopStreamRenderer()
         _uiState.update {
             ChatUiState(
                 conversationId = conversationId,
@@ -113,6 +117,7 @@ class ChatManager(
 
     fun resetChat() {
         sseJob?.cancel()
+        stopStreamRenderer()
         _uiState.update {
             ChatUiState(
                 currentMode = it.currentMode,
@@ -278,26 +283,6 @@ class ChatManager(
             }
         }
 
-        if (route.disposition == RouteDisposition.CONFIRM && route.agentName != null) {
-            val displayName = _uiState.value.availableAgents.firstOrNull { it.name == route.agentName }?.displayName ?: "对应功能"
-            val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
-            val askMsg = Message(
-                role = Message.ROLE_ASSISTANT,
-                content = "我理解您可能想使用「$displayName」（置信度 ${(route.confidence * 100).toInt()}%）。是否按该功能处理？请回复“是/否”。"
-            )
-            _uiState.update {
-                it.copy(
-                    messages = it.messages + userMsg + askMsg,
-                    pendingRouteConfirmation = PendingRouteConfirmation(
-                        agentName = route.agentName,
-                        originalInput = text,
-                        confidence = route.confidence
-                    )
-                )
-            }
-            return
-        }
-
         if (directRoutedAgent == null) {
             sessionContextManager.clear()
             syncActiveAgent()
@@ -319,7 +304,9 @@ class ChatManager(
         chatRepository.saveMessage(convId, userMsg)
 
         sseJob?.cancel()
+        stopStreamRenderer()
         sseJob = scope.launch {
+            startStreamRenderer()
             chatRepository.streamChat(
                 ChatStreamRequest(
                     message = text,
@@ -336,6 +323,8 @@ class ChatManager(
                         .map { ChatHistoryMessage(role = it.role, content = it.content) }
                 )
             ).catch { e ->
+                flushPendingStreamContent()
+                stopStreamRenderer()
                 _uiState.update { it.copy(error = e.message, isLoading = false, statusMessage = null) }
             }.collect { event ->
                 when (event) {
@@ -346,23 +335,19 @@ class ChatManager(
                         _uiState.update { it.copy(statusMessage = event.message) }
                     }
                     is ChatEvent.Content -> {
-                        _uiState.update { state ->
-                            val msgs = state.messages.toMutableList()
-                            val last = msgs.lastOrNull()
-                            if (last?.role == Message.ROLE_ASSISTANT) {
-                                msgs[msgs.lastIndex] = last.copy(content = last.content + event.content)
-                            } else {
-                                msgs.add(Message(role = Message.ROLE_ASSISTANT, content = event.content))
-                            }
-                            state.copy(messages = msgs, statusMessage = null)
+                        synchronized(pendingStreamContent) {
+                            pendingStreamContent.append(event.content)
                         }
                     }
                     is ChatEvent.Sources -> {
+                        flushPendingStreamContent()
                         _uiState.update { state ->
                             attachSourcesToLastAssistant(state, event.sources)
                         }
                     }
                     is ChatEvent.Done -> {
+                        flushPendingStreamContent()
+                        stopStreamRenderer()
                         _uiState.update { state ->
                             val hint = if (state.currentMode == ChatMode.RAG) {
                                 val assistant = state.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
@@ -378,12 +363,51 @@ class ChatManager(
                         }
                     }
                     is ChatEvent.Error -> {
+                        flushPendingStreamContent()
+                        stopStreamRenderer()
                         _uiState.update {
                             it.copy(error = event.message, isLoading = false, statusMessage = null)
                         }
                     }
                 }
             }
+        }
+    }
+
+    private fun startStreamRenderer() {
+        streamRenderJob?.cancel()
+        streamRenderJob = scope.launch {
+            while (isActive) {
+                flushPendingStreamContent()
+                delay(STREAM_FRAME_DELAY_MILLIS)
+            }
+        }
+    }
+
+    private fun stopStreamRenderer() {
+        streamRenderJob?.cancel()
+        streamRenderJob = null
+        synchronized(pendingStreamContent) {
+            pendingStreamContent.clear()
+        }
+    }
+
+    private fun flushPendingStreamContent() {
+        val chunk = synchronized(pendingStreamContent) {
+            if (pendingStreamContent.isEmpty()) return
+            val value = pendingStreamContent.toString()
+            pendingStreamContent.clear()
+            value
+        }
+        _uiState.update { state ->
+            val msgs = state.messages.toMutableList()
+            val last = msgs.lastOrNull()
+            if (last?.role == Message.ROLE_ASSISTANT) {
+                msgs[msgs.lastIndex] = last.copy(content = last.content + chunk)
+            } else {
+                msgs.add(Message(role = Message.ROLE_ASSISTANT, content = chunk))
+            }
+            state.copy(messages = msgs, statusMessage = null)
         }
     }
 
@@ -737,5 +761,10 @@ class ChatManager(
 
     fun destroy() {
         sseJob?.cancel()
+        stopStreamRenderer()
+    }
+
+    private companion object {
+        private const val STREAM_FRAME_DELAY_MILLIS = 16L
     }
 }

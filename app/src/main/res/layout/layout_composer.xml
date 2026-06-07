@@ -1,164 +1,201 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/card_composer"
-    style="@style/Widget.GeoAgent.Composer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/spacing_md"
-    android:layout_marginBottom="@dimen/spacing_md">
+    android:background="@color/background"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="18dp">
 
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_composer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="@dimen/spacing_lg"
-        android:paddingTop="@dimen/spacing_md"
-        android:paddingBottom="@dimen/spacing_sm">
+        app:cardBackgroundColor="@color/surface"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="2dp"
+        app:strokeColor="@color/outline"
+        app:strokeWidth="0.5dp">
 
-        <TextView
-            android:id="@+id/tv_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_sm"
-            android:background="@drawable/bg_status_pill"
-            android:paddingHorizontal="@dimen/spacing_md"
-            android:paddingVertical="@dimen/spacing_xs"
-            android:textColor="@color/primary"
-            android:textSize="12sp"
-            android:visibility="gone" />
-
-        <EditText
-            android:id="@+id/et_message"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:hint="@string/composer_hint"
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine|textCapSentences"
-            android:maxLines="5"
-            android:minHeight="@dimen/composer_input_min_height"
-            android:paddingVertical="@dimen/spacing_xs"
-            android:textColor="@color/on_background"
-            android:textColorHint="@color/text_muted"
-            android:textSize="15sp" />
-
-        <!-- RAG settings (hidden by default) -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_rag_settings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_sm"
-            android:visibility="gone"
-            app:cardBackgroundColor="@color/chip_bg"
-            app:cardCornerRadius="@dimen/radius_md"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline_subtle"
-            app:strokeWidth="0.5dp">
-
-            <LinearLayout
-                android:id="@+id/layout_rag_settings"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_md">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="文档来源数量"
-                    android:textAppearance="@style/TextAppearance.GeoAgent.LabelSmall" />
-
-                <com.google.android.material.slider.Slider
-                    android:id="@+id/slider_top_k"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:stepSize="1"
-                    android:valueFrom="1"
-                    android:valueTo="10"
-                    app:thumbColor="@color/primary"
-                    app:trackColorActive="@color/primary"
-                    app:trackColorInactive="@color/outline" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_xs"
-                    android:text="最小相关度"
-                    android:textAppearance="@style/TextAppearance.GeoAgent.LabelSmall" />
-
-                <com.google.android.material.slider.Slider
-                    android:id="@+id/slider_min_relevance"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:stepSize="0.01"
-                    android:valueFrom="0"
-                    android:valueTo="1"
-                    app:thumbColor="@color/primary"
-                    app:trackColorActive="@color/primary"
-                    app:trackColorInactive="@color/outline" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Bottom row: chips + send button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_sm"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="10dp">
 
-            <HorizontalScrollView
-                android:layout_width="0dp"
+            <!-- Status pill -->
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:scrollbars="none">
+                android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_status_pill"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/deepseek_primary"
+                android:textSize="11sp"
+                android:visibility="gone" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:layout_width="wrap_content"
+            <!-- Input area -->
+            <EditText
+                android:id="@+id/et_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:hint="@string/composer_hint"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLines="4"
+                android:minHeight="44dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/on_background"
+                android:textColorHint="@color/text_muted"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <HorizontalScrollView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:chipSpacingHorizontal="@dimen/spacing_sm"
-                    app:singleLine="true">
+                    android:layout_weight="1"
+                    android:scrollbars="none">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_web_search"
-                        style="@style/Widget.GeoAgent.Chip.Assist"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checkable="true"
-                        android:text="@string/smart_search"
-                        app:chipIcon="@drawable/ic_globe"
-                        app:chipIconVisible="true" />
+                        android:orientation="horizontal">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_image"
-                        style="@style/Widget.GeoAgent.Chip.Assist"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="图片" />
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_deep_thinking"
+                            style="@style/Widget.GeoAgent.Chip.Assist"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginEnd="6dp"
+                            android:checkable="true"
+                            android:clickable="false"
+                            android:text="@string/deep_thinking"
+                            android:textSize="13sp"
+                            app:chipIcon="@drawable/ic_deep_thinking"
+                            app:chipIconSize="15dp"
+                            app:chipIconTint="@color/chip_assist_text"
+                            app:chipIconVisible="true" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_rag_settings"
-                        style="@style/Widget.GeoAgent.Chip.Assist"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="检索设置"
-                        android:visibility="gone" />
-                </com.google.android.material.chip.ChipGroup>
-            </HorizontalScrollView>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_web_search"
+                            style="@style/Widget.GeoAgent.Chip.Assist"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginEnd="6dp"
+                            android:checkable="true"
+                            android:text="@string/smart_search"
+                            android:textSize="13sp"
+                            app:chipIcon="@drawable/ic_globe"
+                            app:chipIconVisible="true"
+                            app:chipIconSize="15dp"
+                            app:chipIconTint="@color/chip_assist_text" />
 
-            <!-- Circle send button -->
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btn_send"
-                android:layout_width="@dimen/send_btn_size"
-                android:layout_height="@dimen/send_btn_size"
-                android:layout_marginStart="@dimen/spacing_sm"
-                android:contentDescription="@string/send"
-                android:enabled="false"
-                android:src="@drawable/ic_send_arrow"
-                app:backgroundTint="@color/deepseek_send_disabled"
-                app:fabCustomSize="@dimen/send_btn_size"
-                app:tint="@color/white" />
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_rag_settings"
+                            style="@style/Widget.GeoAgent.Chip.Assist"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginEnd="6dp"
+                            android:text="检索设置"
+                            android:textSize="13sp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <ImageButton
+                    android:id="@+id/btn_add_image"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_icon_circle"
+                    android:contentDescription="@string/add_image"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_plus"
+                    app:tint="@color/on_background" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btn_send"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/send"
+                    android:enabled="false"
+                    android:src="@drawable/ic_send_arrow"
+                    app:backgroundTint="@color/deepseek_send_disabled"
+                    app:fabCustomSize="40dp"
+                    app:maxImageSize="18dp"
+                    app:tint="@color/white" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- RAG settings card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_rag_settings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/surface"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:strokeColor="@color/outline_subtle"
+        app:strokeWidth="0.5dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="文档检索数量"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/slider_top_k"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stepSize="1"
+                android:valueFrom="1"
+                android:valueTo="10"
+                app:thumbColor="@color/deepseek_primary"
+                app:trackColorActive="@color/deepseek_primary"
+                app:trackColorInactive="@color/outline" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="最小相关度"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/slider_min_relevance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stepSize="0.01"
+                android:valueFrom="0"
+                android:valueTo="1"
+                app:thumbColor="@color/deepseek_primary"
+                app:trackColorActive="@color/deepseek_primary"
+                app:trackColorInactive="@color/outline" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>

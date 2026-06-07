@@ -36,19 +36,20 @@
     <string name="send">发送</string>
     <string name="chat_mode">对话</string>
     <string name="rag_mode">RAG</string>
-    <string name="mode_chat">对话</string>
-    <string name="mode_rag">RAG</string>
+    <string name="mode_chat">快速模式</string>
+    <string name="mode_rag">知识库模式</string>
     <string name="mode_hint_chat">适合日常对话，即时响应</string>
-    <string name="mode_hint_rag">基于知识库检索，精准回答</string>
-    <string name="composer_hint">发消息或按住发送键提问…</string>
+    <string name="mode_hint_rag">基于知识库文档，精准回答</string>
+    <string name="composer_hint">发消息或按住说话</string>
     <string name="drawer_open">打开菜单</string>
     <string name="new_chat">新对话</string>
     <string name="deep_thinking">深度思考</string>
     <string name="smart_search">智能搜索</string>
+    <string name="add_image">添加图片</string>
     <string name="copy">复制</string>
     <string name="regenerate">重新生成</string>
-    <string name="empty_chat_hint_chat">使用智能对话模式开始对话</string>
-    <string name="empty_chat_hint_rag">使用 RAG 模式开始对话</string>
+    <string name="empty_chat_hint_chat">使用快速模式开始对话</string>
+    <string name="empty_chat_hint_rag">使用知识库模式开始对话</string>
 
     <!-- Documents -->
     <string name="upload_document">上传文档</string>

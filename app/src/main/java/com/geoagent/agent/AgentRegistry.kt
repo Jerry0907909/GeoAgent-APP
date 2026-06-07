@@ -62,7 +62,7 @@ private data class AgentScore(
 
 class IntentRouter(
     private val agents: List<AgentMeta>,
-    private val highConfidenceThreshold: Float = 0.8f,
+    private val highConfidenceThreshold: Float = 0.6f,
     private val mediumConfidenceThreshold: Float = 0.6f
 ) {
     fun route(
@@ -87,7 +87,7 @@ class IntentRouter(
         if (contextAgent != null && sessionContext.isActive(nowMillis, contextAgent.ttlMinutes)) {
             val inheritedScore = scoreAgent(contextAgent, input, normalized)
             if (inheritedScore.confidence >= 0.55f) {
-                val confidence = (inheritedScore.confidence + 0.12f).coerceAtMost(0.92f)
+                val confidence = (inheritedScore.confidence + 0.25f).coerceAtMost(0.92f)
                 return decide(
                     agentName = contextAgent.name,
                     confidence = confidence,
@@ -174,8 +174,9 @@ class IntentRouter(
             return AgentScore(meta, 0f, "none")
         }
 
+        val combinedEvidenceBoost = if (keywordHits > 0 && regexHits > 0) 0.08f else 0f
         val priorityBoost = ((120 - meta.priority.coerceIn(0, 120)) / 2000f).coerceAtLeast(0f)
-        val confidence = (base + priorityBoost).coerceAtMost(0.98f)
+        val confidence = (base + combinedEvidenceBoost + priorityBoost).coerceAtMost(0.98f)
         val reason = when {
             regexScore >= keywordScore && regexScore >= semanticScore -> "regex_hit:$regexHits"
             keywordScore >= semanticScore -> "keyword_hit:$keywordHits"

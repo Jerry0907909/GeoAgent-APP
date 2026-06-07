@@ -1,87 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout_empty_chat"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
     android:orientation="vertical"
-    android:paddingHorizontal="@dimen/spacing_2xl">
+    android:paddingHorizontal="24dp">
 
-    <TextView
-        android:id="@+id/tv_empty_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="@string/empty_chat_hint_chat"
-        android:textAppearance="@style/TextAppearance.GeoAgent.HeadlineMedium"
-        android:textColor="@color/on_background" />
+    <Space
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_weight="0.72" />
 
     <LinearLayout
-        android:id="@+id/layout_mode_section"
-        android:layout_width="wrap_content"
+        android:id="@+id/empty_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_xl"
-        android:gravity="center_horizontal"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center"
         android:orientation="vertical">
 
-        <FrameLayout
-            android:id="@+id/mode_switch_container"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/mode_switch_height"
-            android:background="@drawable/bg_deepseek_segment_track"
-            android:clipChildren="true"
-            android:clipToPadding="true"
-            android:padding="@dimen/mode_switch_padding">
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-            <View
-                android:id="@+id/mode_switch_indicator"
-                android:layout_width="@dimen/mode_switch_tab_width"
-                android:layout_height="match_parent"
-                android:layout_gravity="start|center_vertical"
-                android:background="@drawable/bg_deepseek_segment_indicator" />
+            <ImageView
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:contentDescription="@null"
+                android:src="@drawable/geoagent_icon_symbol" />
 
-            <LinearLayout
-                android:id="@+id/mode_switch_tabs"
+            <TextView
+                android:id="@+id/tv_empty_title"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/btn_mode_chat"
-                    android:layout_width="@dimen/mode_switch_tab_width"
-                    android:layout_height="match_parent"
-                    android:background="@android:color/transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="@string/mode_chat"
-                    android:textColor="@color/primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/btn_mode_rag"
-                    android:layout_width="@dimen/mode_switch_tab_width"
-                    android:layout_height="match_parent"
-                    android:background="@android:color/transparent"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="@string/mode_rag"
-                    android:textColor="@color/text_muted"
-                    android:textSize="14sp" />
-            </LinearLayout>
-        </FrameLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:gravity="center"
+                android:singleLine="false"
+                android:text="@string/empty_chat_hint_chat"
+                android:textColor="@color/on_background"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tv_mode_hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_md"
+            android:layout_marginTop="14dp"
             android:gravity="center"
             android:text="@string/mode_hint_chat"
-            android:textAppearance="@style/TextAppearance.GeoAgent.LabelSmall" />
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_mode_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:minHeight="@dimen/mode_switch_height">
+
+            <FrameLayout
+                android:id="@+id/mode_switch_container"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/mode_switch_height"
+                android:background="@drawable/bg_deepseek_segment_track"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintWidth_default="percent"
+                app:layout_constraintWidth_max="360dp"
+                app:layout_constraintWidth_percent="0.82">
+
+                <View
+                    android:id="@+id/mode_switch_indicator"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_gravity="start|center_vertical"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/bg_deepseek_segment_indicator" />
+
+                <LinearLayout
+                    android:id="@+id/mode_switch_tabs"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/btn_mode_chat"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:clickable="true"
+                        android:drawableStart="@drawable/ic_lightning"
+                        android:drawablePadding="6dp"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/mode_chat"
+                        android:textColor="@color/deepseek_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btn_mode_rag"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:clickable="true"
+                        android:drawableStart="@drawable/ic_diamond"
+                        android:drawablePadding="6dp"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/mode_rag"
+                        android:textColor="@color/text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </FrameLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
+
+    <Space
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 </LinearLayout>

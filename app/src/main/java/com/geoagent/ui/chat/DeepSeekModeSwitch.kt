@@ -1,15 +1,15 @@
 package com.geoagent.ui.chat
 
-import android.animation.ValueAnimator
 import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
-import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.geoagent.R
 import com.geoagent.domain.model.ChatMode
+import com.geoagent.ui.motion.MotionTokens
+import com.geoagent.ui.motion.MotionUtils
 
 class DeepSeekModeSwitch(
     private val host: View,
@@ -18,13 +18,12 @@ class DeepSeekModeSwitch(
     private val ragTab: TextView
 ) {
     private var currentMode = ChatMode.CHAT
-    private var animator: ValueAnimator? = null
     private var laidOut = false
 
     init {
         host.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             if (host.width > 0) {
-                positionIndicator(currentMode, animate = laidOut)
+                positionIndicator(currentMode, animate = false)
                 laidOut = true
             }
         }
@@ -39,41 +38,35 @@ class DeepSeekModeSwitch(
     }
 
     private fun positionIndicator(mode: ChatMode, animate: Boolean) {
-        val selected = if (mode == ChatMode.RAG) ragTab else chatTab
-        val targetMargin = selected.left
-        val targetWidth = selected.width
-
-        val lp = (indicator.layoutParams as FrameLayout.LayoutParams).apply {
-            width = targetWidth
-            height = FrameLayout.LayoutParams.MATCH_PARENT
-            gravity = Gravity.START or Gravity.CENTER_VERTICAL
-        }
-        indicator.layoutParams = lp
-        indicator.translationX = 0f
-
-        if (animate) {
-            animator?.cancel()
-            val startMargin = lp.leftMargin
-            ValueAnimator.ofInt(startMargin, targetMargin).apply {
-                duration = 280L
-                interpolator = DecelerateInterpolator(1.4f)
-                addUpdateListener { animation ->
-                    val margin = animation.animatedValue as Int
-                    (indicator.layoutParams as FrameLayout.LayoutParams).leftMargin = margin
-                    indicator.requestLayout()
-                }
-                animator = this
-                start()
-            }
-        } else {
-            lp.leftMargin = targetMargin
+        val inset = (3 * host.resources.displayMetrics.density).toInt()
+        val contentWidth = host.width - inset * 2
+        if (contentWidth <= 0) return
+        val tabWidth = contentWidth / 2
+        val lp = indicator.layoutParams as FrameLayout.LayoutParams
+        if (lp.width != tabWidth || lp.leftMargin != inset) {
+            lp.width = tabWidth
+            lp.height = indicator.layoutParams.height
+            lp.leftMargin = inset
+            lp.gravity = Gravity.START or Gravity.CENTER_VERTICAL
             indicator.layoutParams = lp
         }
+
+        val targetX = if (mode == ChatMode.RAG) tabWidth.toFloat() else 0f
+        indicator.animate().cancel()
+        if (!animate || !MotionUtils.animationsEnabled()) {
+            indicator.translationX = targetX
+            return
+        }
+        indicator.animate()
+            .translationX(targetX)
+            .setDuration(MotionTokens.STATE_MILLIS)
+            .setInterpolator(MotionUtils.easeOut)
+            .start()
     }
 
     private fun updateTabColors(mode: ChatMode) {
         val ctx = host.context
-        val primary = ContextCompat.getColor(ctx, R.color.deepseek_primary)
+        val primary = ContextCompat.getColor(ctx, R.color.geoagent_blue)
         val muted = ContextCompat.getColor(ctx, R.color.deepseek_text_muted)
         if (mode == ChatMode.RAG) {
             styleTab(ragTab, primary, bold = true)
@@ -87,5 +80,8 @@ class DeepSeekModeSwitch(
     private fun styleTab(tab: TextView, color: Int, bold: Boolean) {
         tab.setTextColor(color)
         tab.setTypeface(tab.typeface, if (bold) Typeface.BOLD else Typeface.NORMAL)
+        tab.compoundDrawablesRelative.forEach { drawable ->
+            drawable?.mutate()?.setTint(color)
+        }
     }
 }

@@ -12,6 +12,7 @@ import com.geoagent.R
 import com.geoagent.domain.repository.AuthRepository
 import com.geoagent.ui.TransitionHelper
 import com.geoagent.ui.auth.LoginActivity
+import com.geoagent.ui.motion.MotionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -27,6 +28,7 @@ class AccountSecurityActivity : AppCompatActivity() {
         setContentView(R.layout.activity_account_security)
 
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
+            MotionUtils.press(it)
             finish()
             TransitionHelper.backward(this)
         }
@@ -47,6 +49,7 @@ class AccountSecurityActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btn_save_name).setOnClickListener {
+            MotionUtils.press(it)
             val name = etDisplayName.text?.toString()?.trim().orEmpty()
             if (name.isEmpty()) return@setOnClickListener
             lifecycleScope.launch {
@@ -61,8 +64,12 @@ class AccountSecurityActivity : AppCompatActivity() {
             }
         }
 
-        findViewById<View>(R.id.row_change_password).setOnClickListener { showChangePasswordDialog() }
+        findViewById<View>(R.id.row_change_password).setOnClickListener {
+            MotionUtils.press(it)
+            showChangePasswordDialog()
+        }
         findViewById<View>(R.id.row_switch_account).setOnClickListener {
+            MotionUtils.press(it)
             lifecycleScope.launch {
                 authRepository.logout()
                 startActivity(Intent(this@AccountSecurityActivity, LoginActivity::class.java).apply {

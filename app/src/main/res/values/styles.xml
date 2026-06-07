@@ -65,11 +65,16 @@
     </style>
 
     <style name="Widget.GeoAgent.AuthInput" parent="Widget.Material3.CardView.Filled">
-        <item name="cardBackgroundColor">@color/white</item>
-        <item name="android:backgroundTint">@color/white</item>
-        <item name="cardCornerRadius">26dp</item>
-        <item name="cardElevation">3dp</item>
-        <item name="strokeWidth">0dp</item>
+        <item name="cardBackgroundColor">@color/surface</item>
+        <item name="android:backgroundTint">@color/surface</item>
+        <item name="cardCornerRadius">24dp</item>
+        <item name="cardElevation">1dp</item>
+        <item name="strokeColor">@color/outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.GeoAgent.AuthLineInput" parent="@android:style/Widget">
+        <item name="android:background">@drawable/bg_auth_line_input</item>
     </style>
 
     <!-- ── Composer Card ── -->
@@ -113,13 +118,19 @@
     <!-- ── Chips ── -->
 
     <style name="Widget.GeoAgent.Chip.Assist" parent="Widget.Material3.Chip.Assist">
-        <item name="chipBackgroundColor">@color/chip_bg</item>
-        <item name="chipStrokeColor">@color/chip_border</item>
+        <item name="chipBackgroundColor">@color/chip_assist_bg</item>
+        <item name="chipStrokeColor">@color/chip_assist_stroke</item>
         <item name="chipStrokeWidth">0.5dp</item>
         <item name="chipCornerRadius">@dimen/radius_full</item>
-        <item name="android:textColor">@color/on_background</item>
-        <item name="chipMinHeight">36dp</item>
+        <item name="android:textColor">@color/chip_assist_text</item>
+        <item name="chipMinHeight">34dp</item>
         <item name="android:textSize">13sp</item>
+        <item name="chipStartPadding">9dp</item>
+        <item name="chipEndPadding">9dp</item>
+        <item name="iconStartPadding">0dp</item>
+        <item name="iconEndPadding">4dp</item>
+        <item name="textStartPadding">0dp</item>
+        <item name="textEndPadding">0dp</item>
     </style>
 
     <!-- ── Segment Switch ── -->

@@ -18,10 +18,10 @@ class IntentRouterTest {
     }
 
     @Test
-    fun confirmRoute_whenMediumConfidenceNaturalLanguage() {
+    fun directRoute_whenMediumConfidenceNaturalLanguage() {
         val result = router.route("帮我转换一下")
 
-        assertEquals(RouteDisposition.CONFIRM, result.disposition)
+        assertEquals(RouteDisposition.DIRECT, result.disposition)
         assertEquals(UnitConversionAgent.META.name, result.agentName)
         assertTrue(result.confidence in 0.6f..0.8f)
     }

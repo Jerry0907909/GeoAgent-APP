@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.geoagent.R
 import com.geoagent.domain.repository.DocumentRepository
 import com.geoagent.ui.TransitionHelper
+import com.geoagent.ui.motion.MotionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -26,6 +27,7 @@ class DocumentDetailActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.title = source
         toolbar.setNavigationOnClickListener {
+            MotionUtils.press(toolbar)
             finish()
             TransitionHelper.backward(this)
         }

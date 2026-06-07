@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.geoagent.R
 import com.geoagent.data.local.UserPrefsDataStore
 import com.geoagent.ui.TransitionHelper
+import com.geoagent.ui.motion.MotionUtils
 import com.geoagent.ui.theme.AppThemeHelper
 import com.geoagent.ui.theme.AppThemeMode
 import com.google.android.material.appbar.MaterialToolbar
@@ -23,12 +24,14 @@ class AppearanceActivity : AppCompatActivity() {
         setContentView(R.layout.activity_appearance)
 
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
+            MotionUtils.press(it)
             finish()
             TransitionHelper.backward(this)
         }
 
         val rgTheme = findViewById<RadioGroup>(R.id.rg_theme)
         rgTheme.setOnCheckedChangeListener { _, checkedId ->
+            MotionUtils.press(rgTheme)
             val mode = when (checkedId) {
                 R.id.rb_light -> AppThemeMode.LIGHT
                 R.id.rb_dark -> AppThemeMode.DARK

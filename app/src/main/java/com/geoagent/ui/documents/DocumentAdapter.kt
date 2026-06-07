@@ -5,9 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.geoagent.R
 import com.geoagent.data.api.dto.DocumentDto
+import com.geoagent.ui.motion.MotionUtils
 
 class DocumentAdapter(
     private val onOpen: (DocumentDto) -> Unit,
@@ -17,9 +19,10 @@ class DocumentAdapter(
     private val items = mutableListOf<DocumentDto>()
 
     fun submit(documents: List<DocumentDto>) {
+        val oldItems = items.toList()
         items.clear()
         items.addAll(documents)
-        notifyDataSetChanged()
+        DiffUtil.calculateDiff(DocumentDiff(oldItems, documents)).dispatchUpdatesTo(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
@@ -31,8 +34,14 @@ class DocumentAdapter(
         val doc = items[position]
         holder.name.text = doc.source
         holder.meta.text = doc.collection
-        holder.itemView.setOnClickListener { onOpen(doc) }
-        holder.delete.setOnClickListener { onDelete(doc) }
+        holder.itemView.setOnClickListener {
+            MotionUtils.press(holder.itemView)
+            onOpen(doc)
+        }
+        holder.delete.setOnClickListener {
+            MotionUtils.press(holder.delete)
+            onDelete(doc)
+        }
     }
 
     override fun getItemCount(): Int = items.size
@@ -41,5 +50,20 @@ class DocumentAdapter(
         val name: TextView = view.findViewById(R.id.tv_name)
         val meta: TextView = view.findViewById(R.id.tv_meta)
         val delete: ImageButton = view.findViewById(R.id.btn_delete)
+    }
+
+    private class DocumentDiff(
+        private val oldItems: List<DocumentDto>,
+        private val newItems: List<DocumentDto>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize(): Int = oldItems.size
+        override fun getNewListSize(): Int = newItems.size
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldItems[oldItemPosition].id == newItems[newItemPosition].id
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldItems[oldItemPosition] == newItems[newItemPosition]
+        }
     }
 }

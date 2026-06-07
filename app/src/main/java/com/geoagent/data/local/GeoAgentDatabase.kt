@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
 class GeoAgentDatabase(context: Context) : SQLiteOpenHelper(
-    context.applicationContext, "geoagent.db", null, 1
+    context.applicationContext, "geoagent.db", null, 2
 ) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -46,16 +46,35 @@ class GeoAgentDatabase(context: Context) : SQLiteOpenHelper(
                 timestamp INTEGER NOT NULL
             )
         """)
+        db.execSQL("""
+            CREATE TABLE conversations (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                title_edited INTEGER NOT NULL DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            )
+        """)
         db.execSQL("CREATE INDEX idx_chunks_doc ON chunks(document_id)")
         db.execSQL("CREATE INDEX idx_embeddings_doc ON embeddings(document_id)")
         db.execSQL("CREATE INDEX idx_messages_conv ON messages(conversation_id)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS embeddings")
-        db.execSQL("DROP TABLE IF EXISTS chunks")
-        db.execSQL("DROP TABLE IF EXISTS documents")
-        db.execSQL("DROP TABLE IF EXISTS messages")
-        onCreate(db)
+        if (oldVersion < 2) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id INTEGER PRIMARY KEY,
+                    title TEXT,
+                    title_edited INTEGER NOT NULL DEFAULT 0,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            db.execSQL("""
+                INSERT OR IGNORE INTO conversations (id, title, title_edited, updated_at)
+                SELECT conversation_id, NULL, 0, MAX(timestamp)
+                FROM messages
+                GROUP BY conversation_id
+            """)
+        }
     }
 }

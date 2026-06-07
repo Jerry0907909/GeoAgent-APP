@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="WaveBarsLoadingView">
+        <attr name="barCount" format="integer" />
+        <attr name="barColorStart" format="color" />
+        <attr name="barColorEnd" format="color" />
+        <attr name="highlightColor" format="color" />
+        <attr name="barCornerRadius" format="dimension" />
+        <attr name="animationDuration" format="integer" />
+        <attr name="flowDuration" format="integer" />
+    </declare-styleable>
+</resources>
