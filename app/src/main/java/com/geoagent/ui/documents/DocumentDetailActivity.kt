@@ -10,12 +10,14 @@ import com.geoagent.domain.repository.DocumentRepository
 import com.geoagent.ui.TransitionHelper
 import com.geoagent.ui.motion.MotionUtils
 import com.google.android.material.appbar.MaterialToolbar
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
 
+@AndroidEntryPoint
 class DocumentDetailActivity : AppCompatActivity() {
 
-    private val documentRepository: DocumentRepository by inject()
+    @Inject lateinit var documentRepository: DocumentRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

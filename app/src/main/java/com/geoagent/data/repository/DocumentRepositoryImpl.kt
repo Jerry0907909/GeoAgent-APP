@@ -2,19 +2,23 @@ package com.geoagent.data.repository
 
 import android.content.Context
 import android.net.Uri
+import com.geoagent.BuildConfig
 import com.geoagent.data.api.SiliconFlowEmbeddingClient
 import com.geoagent.data.api.dto.*
+import com.geoagent.data.local.ApiKeyStore
 import com.geoagent.data.local.DocumentChunker
 import com.geoagent.data.local.DocumentParser
 import com.geoagent.data.local.DocumentStore
 import com.geoagent.data.local.LocalDocument
 import com.geoagent.domain.repository.DocumentRepository
+import kotlinx.coroutines.flow.first
 import okhttp3.MultipartBody
 import java.util.UUID
 
 class DocumentRepositoryImpl(
     private val documentStore: DocumentStore,
-    private val embeddingClient: SiliconFlowEmbeddingClient
+    private val embeddingClient: SiliconFlowEmbeddingClient,
+    private val apiKeyStore: ApiKeyStore
 ) : DocumentRepository {
 
     override suspend fun getDocuments(collection: String?): Result<List<DocumentDto>> {
@@ -61,10 +65,10 @@ class DocumentRepositoryImpl(
                         chunkCount = chunks.size
                     )
 
-                    // Generate embeddings for all chunks
                     val chunkTexts = chunks.map { it.text }
-                    val embeddings = if (chunkTexts.isNotEmpty()) {
-                        embeddingClient.embed(chunkTexts).getOrDefault(emptyList())
+                    val apiKey = siliconFlowApiKey()
+                    val embeddings = if (chunkTexts.isNotEmpty() && apiKey != null) {
+                        embeddingClient.embed(chunkTexts, apiKey).getOrDefault(emptyList())
                     } else emptyList()
 
                     documentStore.addDocument(doc, chunks, embeddings)
@@ -115,6 +119,9 @@ class DocumentRepositoryImpl(
         created_at = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(createdAt)),
         collection = "local"
     )
-}
 
+    private suspend fun siliconFlowApiKey(): String? =
+        apiKeyStore.siliconFlowKey.first()?.takeIf { it.isNotBlank() }
+            ?: BuildConfig.SILICONFLOW_API_KEY.takeIf { it.isNotBlank() }
+}
 

@@ -1,6 +1,7 @@
 package com.geoagent.data.api
 
 import com.geoagent.data.api.dto.ChatEvent
+import com.google.gson.JsonParser
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import okhttp3.MediaType.Companion.toMediaType
@@ -8,6 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -27,9 +29,96 @@ class DeepSeekChatClientTest {
         assertTrue(events.any { it is ChatEvent.Done })
     }
 
-    private fun fakeClient(body: String): OkHttpClient {
+    @Test
+    fun streamChatIgnoresThinkingEventsWhenThinkingModeDisabled() = runBlocking {
+        val client = DeepSeekChatClient(fakeClient(reasoningChunkBody()))
+
+        val events = mutableListOf<ChatEvent>()
+        withTimeout(1_000L) {
+            client.streamChat(
+                listOf(ChatMessage("user", "hello")),
+                "test-key",
+                enableThinking = false
+            ).collect {
+                events.add(it)
+            }
+        }
+
+        assertFalse(events.any { it is ChatEvent.Thinking })
+        assertTrue(events.any { it is ChatEvent.Content })
+    }
+
+    @Test
+    fun streamChatEmitsThinkingEventsWhenThinkingModeEnabled() = runBlocking {
+        val client = DeepSeekChatClient(fakeClient(reasoningChunkBody()))
+
+        val events = mutableListOf<ChatEvent>()
+        withTimeout(1_000L) {
+            client.streamChat(
+                listOf(ChatMessage("user", "hello")),
+                "test-key",
+                enableThinking = true
+            ).collect {
+                events.add(it)
+            }
+        }
+
+        assertTrue(events.any { it is ChatEvent.Thinking })
+        assertTrue(events.any { it is ChatEvent.Content })
+    }
+
+    @Test
+    fun streamChatSendsThinkingDisabledExplicitly() = runBlocking {
+        var requestBody = ""
+        val client = DeepSeekChatClient(fakeClient("data: [DONE]\n") { requestBody = it })
+
+        withTimeout(1_000L) {
+            client.streamChat(
+                listOf(ChatMessage("user", "hello")),
+                "test-key",
+                enableThinking = false
+            ).collect { }
+        }
+
+        val json = JsonParser.parseString(requestBody).asJsonObject
+        assertTrue(json.has("enable_thinking"))
+        assertFalse(json.get("enable_thinking").asBoolean)
+    }
+
+    @Test
+    fun streamChatSendsThinkingEnabledExplicitly() = runBlocking {
+        var requestBody = ""
+        val client = DeepSeekChatClient(fakeClient("data: [DONE]\n") { requestBody = it })
+
+        withTimeout(1_000L) {
+            client.streamChat(
+                listOf(ChatMessage("user", "hello")),
+                "test-key",
+                enableThinking = true
+            ).collect { }
+        }
+
+        val json = JsonParser.parseString(requestBody).asJsonObject
+        assertTrue(json.has("enable_thinking"))
+        assertTrue(json.get("enable_thinking").asBoolean)
+    }
+
+    private fun reasoningChunkBody(): String {
+        return """
+            data: {"choices":[{"delta":{"reasoning_content":"thinking","content":"answer"}}]}
+            data: [DONE]
+        """.trimIndent()
+    }
+
+    private fun fakeClient(body: String, onRequestBody: (String) -> Unit = {}): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor { chain ->
+                val requestBody = chain.request().body
+                if (requestBody != null) {
+                    val buffer = okio.Buffer()
+                    requestBody.writeTo(buffer)
+                    onRequestBody(buffer.readUtf8())
+                }
                 Response.Builder()
                     .request(chain.request())
                     .protocol(Protocol.HTTP_1_1)

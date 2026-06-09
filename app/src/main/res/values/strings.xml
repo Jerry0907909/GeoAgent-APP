@@ -43,7 +43,7 @@
     <string name="composer_hint">发消息或按住说话</string>
     <string name="drawer_open">打开菜单</string>
     <string name="new_chat">新对话</string>
-    <string name="deep_thinking">深度思考</string>
+    <string name="deep_thinking">思考模式</string>
     <string name="smart_search">智能搜索</string>
     <string name="add_image">添加图片</string>
     <string name="copy">复制</string>
@@ -93,4 +93,49 @@
     <string name="current_password">当前密码</string>
     <string name="new_password">新密码</string>
     <string name="confirm_new_password">确认新密码</string>
+
+    <!-- Settings sections -->
+    <string name="section_privacy">隐私与数据</string>
+    <string name="section_personalization">个性化</string>
+    <string name="section_notifications">通知与偏好</string>
+    <string name="section_usage">使用与限制</string>
+    <string name="section_advanced">高级</string>
+
+    <!-- Privacy -->
+    <string name="privacy_data_improve">允许使用对话改进模型</string>
+    <string name="privacy_data_improve_desc">匿名化的对话数据将用于模型训练和改进</string>
+    <string name="privacy_export_data">导出数据</string>
+    <string name="privacy_delete_data">删除所有数据</string>
+    <string name="privacy_incognito">隐身模式</string>
+    <string name="privacy_incognito_desc">新对话将在关闭后自动删除</string>
+    <string name="privacy_memory_manage">记忆管理</string>
+    <string name="privacy_activity_audit">活动历史审核</string>
+
+    <!-- Personalization -->
+    <string name="pers_custom_instruction">自定义指令</string>
+    <string name="pers_memory_toggle">长期记忆</string>
+    <string name="pers_memory_desc">记住用户偏好和历史上下文</string>
+    <string name="pers_ai_profile">AI 个人档案</string>
+
+    <!-- Notifications -->
+    <string name="notif_push">推送通知</string>
+    <string name="notif_email_alerts">邮件提醒</string>
+    <string name="notif_usage_alert">用量提醒</string>
+
+    <!-- Usage -->
+    <string name="usage_stats">用量统计</string>
+    <string name="usage_chat_history">聊天历史管理</string>
+
+    <!-- Advanced -->
+    <string name="advanced_api_keys">API 密钥管理</string>
+    <string name="advanced_beta">Beta 功能</string>
+    <string name="advanced_debug">调试日志</string>
+
+    <!-- About -->
+    <string name="about_help">帮助中心</string>
+    <string name="about_feedback">反馈与建议</string>
+    <string name="about_terms">服务条款</string>
+    <string name="about_privacy_policy">隐私政策</string>
+    <string name="about_license">开源许可</string>
+    <string name="about_check_update">检查更新</string>
 </resources>

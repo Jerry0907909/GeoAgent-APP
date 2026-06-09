@@ -4,10 +4,41 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.security.SecureRandom
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 
 class AccountStore(context: Context) {
 
     private val db: SQLiteDatabase
+
+    companion object {
+        private const val PBKDF2_ITERATIONS = 10000
+        private const val PBKDF2_KEY_LENGTH = 256
+        private const val SALT_LENGTH = 16
+
+        fun hashPassword(password: String): String {
+            val salt = ByteArray(SALT_LENGTH)
+            SecureRandom().nextBytes(salt)
+            val spec = PBEKeySpec(password.toCharArray(), salt, PBKDF2_ITERATIONS, PBKDF2_KEY_LENGTH)
+            val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+            val hash = factory.generateSecret(spec).encoded
+            val saltHex = salt.joinToString("") { "%02x".format(it) }
+            val hashHex = hash.joinToString("") { "%02x".format(it) }
+            return "$saltHex:$hashHex"
+        }
+
+        fun verifyPassword(password: String, stored: String): Boolean {
+            val parts = stored.split(":")
+            if (parts.size != 2) return false
+            val salt = parts[0].chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+            val spec = PBEKeySpec(password.toCharArray(), salt, PBKDF2_ITERATIONS, PBKDF2_KEY_LENGTH)
+            val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+            val hash = factory.generateSecret(spec).encoded
+            val hashHex = hash.joinToString("") { "%02x".format(it) }
+            return hashHex == parts[1]
+        }
+    }
 
     init {
         val helper = object : SQLiteOpenHelper(context.applicationContext, "accounts.db", null, 1) {

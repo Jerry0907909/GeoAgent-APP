@@ -18,12 +18,14 @@ import com.geoagent.ui.TransitionHelper
 import com.geoagent.ui.motion.MotionUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
 
+@AndroidEntryPoint
 class DocumentListActivity : AppCompatActivity() {
 
-    private val documentRepository: DocumentRepository by inject()
+    @Inject lateinit var documentRepository: DocumentRepository
     private lateinit var adapter: DocumentAdapter
 
     private val uploadPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->

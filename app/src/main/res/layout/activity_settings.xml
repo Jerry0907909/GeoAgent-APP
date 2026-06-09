@@ -18,132 +18,173 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingHorizontal="@dimen/spacing_lg"
-        android:paddingBottom="@dimen/spacing_2xl">
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="40dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="@dimen/spacing_sm">
+            android:paddingTop="8dp">
 
+            <!-- Profile -->
             <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.GeoAgent.Card.Outlined"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_lg">
-
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="@color/settings_card_bg"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/outline" app:strokeWidth="1dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="@dimen/spacing_lg">
-
-                    <TextView
-                        android:id="@+id/tv_user_name"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/on_background"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_user_email"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:textColor="@color/text_muted"
-                        android:textSize="14sp" />
+                    android:padding="20dp">
+                    <TextView android:id="@+id/tv_user_name"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textColor="@color/on_background" android:textSize="20sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/tv_user_email"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp" android:textColor="@color/text_secondary" android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                style="@style/TextAppearance.GeoAgent.LabelSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_xs"
-                android:paddingHorizontal="@dimen/spacing_xs"
-                android:text="@string/section_account" />
-
+            <!-- Account -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/section_account" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.06"
+                android:layout_marginBottom="8dp" android:paddingHorizontal="4dp" />
             <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.GeoAgent.Card.Outlined"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <include
-                        android:id="@+id/row_account"
-                        layout="@layout/layout_item_settings_row" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginStart="@dimen/spacing_lg"
-                        android:background="@color/outline_subtle" />
-
-                    <include
-                        android:id="@+id/row_appearance"
-                        layout="@layout/layout_item_settings_row" />
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/row_account" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_appearance" layout="@layout/layout_item_settings_row" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                style="@style/TextAppearance.GeoAgent.LabelSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_lg"
-                android:layout_marginBottom="@dimen/spacing_xs"
-                android:paddingHorizontal="@dimen/spacing_xs"
-                android:text="@string/section_app" />
-
+            <!-- Privacy -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/section_privacy" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.06"
+                android:layout_marginBottom="8dp" android:paddingHorizontal="4dp" />
             <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.GeoAgent.Card.Outlined"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <include
-                    android:id="@+id/row_documents"
-                    layout="@layout/layout_item_settings_row" />
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/sw_data_improve" layout="@layout/layout_item_settings_switch" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/sw_incognito" layout="@layout/layout_item_settings_switch" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_export_data" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_delete_data" layout="@layout/layout_item_settings_row" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                style="@style/TextAppearance.GeoAgent.LabelSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_lg"
-                android:layout_marginBottom="@dimen/spacing_xs"
-                android:paddingHorizontal="@dimen/spacing_xs"
-                android:text="@string/section_about" />
-
+            <!-- Personalization -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/section_personalization" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.06"
+                android:layout_marginBottom="8dp" android:paddingHorizontal="4dp" />
             <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.GeoAgent.Card.Outlined"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_lg">
-
-                <include
-                    android:id="@+id/row_version"
-                    layout="@layout/layout_item_settings_row" />
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/row_custom_instruction" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/sw_memory" layout="@layout/layout_item_settings_switch" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_ai_profile" layout="@layout/layout_item_settings_row" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Knowledge Base -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="知识库" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.06"
+                android:layout_marginBottom="8dp" android:paddingHorizontal="4dp" />
             <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.GeoAgent.Card.Outlined"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/row_documents" layout="@layout/layout_item_settings_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
+            <!-- Notifications -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/section_notifications" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.06"
+                android:layout_marginBottom="8dp" android:paddingHorizontal="4dp" />
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/sw_push" layout="@layout/layout_item_settings_switch" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/sw_email_alerts" layout="@layout/layout_item_settings_switch" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Usage -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/section_usage" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.06"
+                android:layout_marginBottom="8dp" android:paddingHorizontal="4dp" />
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/row_usage_stats" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_chat_history" layout="@layout/layout_item_settings_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- About -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/section_about" android:textColor="@color/text_secondary"
+                android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.06"
+                android:layout_marginBottom="8dp" android:paddingHorizontal="4dp" />
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/row_help" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_feedback" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_version" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_terms" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_privacy_policy" layout="@layout/layout_item_settings_row" />
+                    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:layout_marginStart="16dp" android:background="@color/outline_subtle" />
+                    <include android:id="@+id/row_license" layout="@layout/layout_item_settings_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Logout -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:layout_marginBottom="32dp"
+                app:cardBackgroundColor="@color/settings_card_bg" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeColor="@color/outline" app:strokeWidth="1dp">
                 <TextView
                     android:id="@+id/btn_logout"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
+                    android:layout_width="match_parent" android:layout_height="52dp"
                     android:background="?attr/selectableItemBackground"
-                    android:gravity="center"
-                    android:text="@string/logout"
-                    android:textColor="@color/destructive"
-                    android:textSize="16sp" />
+                    android:gravity="center" android:text="@string/logout"
+                    android:textColor="@color/destructive" android:textSize="16sp" />
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
     </ScrollView>

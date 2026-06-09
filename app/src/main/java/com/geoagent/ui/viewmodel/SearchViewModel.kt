@@ -28,7 +28,7 @@ class SearchViewModel @Inject constructor(
     fun prepareSearch(question: String) {
         viewModelScope.launch {
             val deepSeekKey = apiKeyStore.deepseekKey.first()?.takeIf { it.isNotBlank() }
-                ?: BuildConfig.DEEPSEEK_API_KEY.takeIf { it.isNotBlank() }
+                ?: BuildConfig.SILICONFLOW_API_KEY.takeIf { it.isNotBlank() }
             val tavilyKey = apiKeyStore.tavilyKey.first()?.takeIf { it.isNotBlank() }
                 ?: BuildConfig.TAVILY_API_KEY.takeIf { it.isNotBlank() }
             if (deepSeekKey.isNullOrBlank() || tavilyKey.isNullOrBlank()) {

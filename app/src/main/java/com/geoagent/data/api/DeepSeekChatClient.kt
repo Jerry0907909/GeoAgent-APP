@@ -24,12 +24,14 @@ class DeepSeekChatClient(private val client: OkHttpClient) {
 
     private val gson = Gson()
     private val jsonMediaType = "application/json".toMediaType()
-    private val baseUrl = "https://api.deepseek.com/v1/chat/completions"
+    private val baseUrl = "https://api.siliconflow.cn/v1/chat/completions"
+    private val defaultModel = com.geoagent.BuildConfig.SILICONFLOW_CHAT_MODEL
+    private val apiKey = com.geoagent.BuildConfig.SILICONFLOW_API_KEY
 
     suspend fun completeChat(
         messages: List<ChatMessage>,
-        apiKey: String,
-        model: String = "deepseek-chat"
+        apiKey: String = this.apiKey,
+        model: String = defaultModel
     ): Result<String> = withContext(Dispatchers.IO) {
         runCatching {
             val requestBody = gson.toJson(
@@ -67,16 +69,17 @@ class DeepSeekChatClient(private val client: OkHttpClient) {
 
     fun streamChat(
         messages: List<ChatMessage>,
-        apiKey: String,
-        model: String = "deepseek-chat"
+        apiKey: String = this.apiKey,
+        model: String = defaultModel,
+        enableThinking: Boolean = false
     ): Flow<ChatEvent> = flow {
-        val requestBody = gson.toJson(
-            mapOf(
-                "model" to model,
-                "messages" to messages.map { mapOf("role" to it.role, "content" to it.content) },
-                "stream" to true
-            )
-        ).toRequestBody(jsonMediaType)
+        val bodyMap = mutableMapOf<String, Any>(
+            "model" to model,
+            "messages" to messages.map { mapOf("role" to it.role, "content" to it.content) },
+            "stream" to true,
+            "enable_thinking" to enableThinking
+        )
+        val requestBody = gson.toJson(bodyMap).toRequestBody(jsonMediaType)
 
         val request = Request.Builder()
             .url(baseUrl)
@@ -126,7 +129,11 @@ class DeepSeekChatClient(private val client: OkHttpClient) {
                             emit(ChatEvent.Done())
                             return@flow
                         }
-                        parseOpenAiChunk(data)?.let { content ->
+                        val (reasoning, content) = parseOpenAiChunk(data)
+                        if (enableThinking && reasoning != null) {
+                            emit(ChatEvent.Thinking(reasoning))
+                        }
+                        if (content != null) {
                             contentBuilder.append(content)
                             emit(ChatEvent.Content(content))
                         }
@@ -146,17 +153,17 @@ class DeepSeekChatClient(private val client: OkHttpClient) {
         }
     }.flowOn(Dispatchers.IO)
 
-    private fun parseOpenAiChunk(data: String): String? {
+    private fun parseOpenAiChunk(data: String): Pair<String?, String?> {
         return try {
             val json = JsonParser.parseString(data).asJsonObject
-            val choices = json.getAsJsonArray("choices") ?: return null
-            if (choices.size() == 0) return null
-            val delta = choices[0].asJsonObject.getAsJsonObject("delta") ?: return null
-            val content = delta.get("content")
-            if (content == null || content.isJsonNull) return null
-            content.asString
+            val choices = json.getAsJsonArray("choices") ?: return Pair(null, null)
+            if (choices.size() == 0) return Pair(null, null)
+            val delta = choices[0].asJsonObject.getAsJsonObject("delta") ?: return Pair(null, null)
+            val reasoning = delta.get("reasoning_content")?.takeIf { !it.isJsonNull }?.asString
+            val content = delta.get("content")?.takeIf { !it.isJsonNull }?.asString
+            Pair(reasoning, content)
         } catch (_: Exception) {
-            null
+            Pair(null, null)
         }
     }
 

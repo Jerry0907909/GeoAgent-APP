@@ -12,6 +12,7 @@ import com.geoagent.data.api.dto.SourceDto
 import com.geoagent.data.local.ApiKeyStore
 import com.geoagent.data.local.DocumentStore
 import com.geoagent.data.local.GeoAgentDatabase
+import com.geoagent.data.local.UserPrefsDataStore
 import com.geoagent.domain.SearchContext
 import com.geoagent.domain.SearchPromptTools
 import com.geoagent.domain.SearchUseCase
@@ -30,7 +31,8 @@ class ChatRepositoryImpl(
     private val apiKeyStore: ApiKeyStore,
     private val documentStore: DocumentStore,
     private val embeddingClient: SiliconFlowEmbeddingClient,
-    private val db: GeoAgentDatabase
+    private val db: GeoAgentDatabase,
+    private val userPrefsDataStore: UserPrefsDataStore
 ) : ChatRepository {
 
     override suspend fun chat(request: ChatStreamRequest): Result<ChatResponse> {
@@ -58,36 +60,37 @@ class ChatRepositoryImpl(
 
         val searchContext = if (request.web_search == true) {
             emit(ChatEvent.Status("智能搜索中…"))
-            val required = searchUseCase.judgeSearchRequired(request.message, apiKey).getOrElse { e ->
-                emit(ChatEvent.Error("联网判断失败：${e.message ?: "未知错误"}"))
+            val tavilyKey = tavilyApiKey()
+            if (tavilyKey.isNullOrBlank()) {
+                emit(ChatEvent.Error("请先设置 Tavily API Key"))
                 return@flow
             }
-            if (required) {
-                val tavilyKey = tavilyApiKey()
-                if (tavilyKey.isNullOrBlank()) {
-                    emit(ChatEvent.Error("请先设置 Tavily API Key"))
-                    return@flow
-                }
-                var context: SearchContext? = null
-                var error: String? = null
-                searchUseCase.searchRequiredContext(request.message, tavilyKey).collect { event ->
-                    when (event) {
-                        is SearchUseCaseEvent.Status -> emit(ChatEvent.Status("正在检索网络来源…"))
-                        is SearchUseCaseEvent.Plan -> emit(ChatEvent.Status("正在检索网络来源…"))
-                        is SearchUseCaseEvent.SearchReady -> context = event.context
-                        is SearchUseCaseEvent.Error -> error = event.message
-                        SearchUseCaseEvent.NoSearch -> Unit
+            var context: SearchContext? = null
+            var error: String? = null
+            searchUseCase.searchRequiredContext(request.message, tavilyKey).collect { event ->
+                when (event) {
+                    is SearchUseCaseEvent.Status -> emit(ChatEvent.Status("正在检索网络来源…"))
+                    is SearchUseCaseEvent.Plan -> {
+                        emit(ChatEvent.Status("正在检索网络来源…"))
+                        if (request.enable_thinking) {
+                            emit(ChatEvent.Thinking(SearchPromptTools.buildSearchPlanThinking(event.queries)))
+                        }
                     }
+                    is SearchUseCaseEvent.SearchReady -> {
+                        context = event.context
+                        if (request.enable_thinking) {
+                            emit(ChatEvent.Thinking(SearchPromptTools.buildSearchReadyThinking(event.context.results)))
+                        }
+                    }
+                    is SearchUseCaseEvent.Error -> error = event.message
+                    SearchUseCaseEvent.NoSearch -> Unit
                 }
-                if (error != null) {
-                    emit(ChatEvent.Error(error!!))
-                    return@flow
-                }
-                context
-            } else {
-                emit(ChatEvent.Status("正在生成回答…"))
-                null
             }
+            if (error != null) {
+                emit(ChatEvent.Error(error!!))
+                return@flow
+            }
+            context
         } else null
 
         val searchResults = searchContext?.toSourceDtos().orEmpty()
@@ -97,8 +100,9 @@ class ChatRepositoryImpl(
         val messages = buildMessages(chatRequest)
         var emittedContent = false
         var retrySearchSynthesis = false
-        deepSeekClient.streamChat(messages, apiKey).collect { event ->
+        deepSeekClient.streamChat(messages, apiKey, enableThinking = request.enable_thinking).collect { event ->
             when (event) {
+                is ChatEvent.Thinking -> emit(event)
                 is ChatEvent.Content -> {
                     emittedContent = true
                     emit(event)
@@ -108,7 +112,9 @@ class ChatRepositoryImpl(
                     if (searchResults.isNotEmpty()) emit(ChatEvent.Sources(searchResults))
                     emit(event)
                 }
-                is ChatEvent.Sources -> emit(event)
+                is ChatEvent.Sources -> {
+                    if (searchResults.isEmpty()) emit(event)
+                }
                 is ChatEvent.Error -> {
                     if (searchContext != null && !emittedContent) {
                         retrySearchSynthesis = true
@@ -140,7 +146,9 @@ class ChatRepositoryImpl(
                         if (searchResults.isNotEmpty()) emit(ChatEvent.Sources(searchResults))
                         emit(event)
                     }
-                    is ChatEvent.Sources -> emit(event)
+                    is ChatEvent.Sources -> {
+                        if (searchResults.isEmpty()) emit(event)
+                    }
                     is ChatEvent.Error -> {
                         if (!retryEmittedContent) {
                             emit(ChatEvent.Content(SearchPromptTools.buildFallbackAnswer(request.message, searchContext.results)))
@@ -185,11 +193,15 @@ class ChatRepositoryImpl(
 
     private suspend fun deepseekApiKey(): String? =
         apiKeyStore.deepseekKey.first()?.takeIf { it.isNotBlank() }
-            ?: BuildConfig.DEEPSEEK_API_KEY.takeIf { it.isNotBlank() }
+            ?: BuildConfig.SILICONFLOW_API_KEY.takeIf { it.isNotBlank() }
 
     private suspend fun tavilyApiKey(): String? =
         apiKeyStore.tavilyKey.first()?.takeIf { it.isNotBlank() }
             ?: BuildConfig.TAVILY_API_KEY.takeIf { it.isNotBlank() }
+
+    private suspend fun siliconFlowApiKey(): String? =
+        apiKeyStore.siliconFlowKey.first()?.takeIf { it.isNotBlank() }
+            ?: BuildConfig.SILICONFLOW_API_KEY.takeIf { it.isNotBlank() }
 
     private fun SearchContext.toSourceDtos(): List<SourceDto> =
         results.map {
@@ -197,7 +209,8 @@ class ChatRepositoryImpl(
                 content = it.content.take(SOURCE_CONTENT_LIMIT),
                 source = it.title,
                 url = it.url,
-                type = "web"
+                type = "web",
+                published_date = it.publishedDate
             )
         }
 
@@ -231,7 +244,7 @@ class ChatRepositoryImpl(
             }
             Result.success(conversations)
         } catch (e: Exception) {
-            Result.success(emptyList())
+            Result.failure(e)
         }
     }
 
@@ -250,7 +263,7 @@ class ChatRepositoryImpl(
             }
             Result.success(messages)
         } catch (e: Exception) {
-            Result.success(emptyList())
+            Result.failure(e)
         }
     }
 
@@ -286,6 +299,20 @@ class ChatRepositoryImpl(
                 arrayOf(conversationId.toString())
             )
         } catch (_: Exception) {}
+    }
+
+    override suspend fun clearAllConversations(): Result<Unit> {
+        return runCatching {
+            val writable = db.writableDatabase
+            writable.beginTransaction()
+            try {
+                writable.delete("messages", null, null)
+                writable.delete("conversations", null, null)
+                writable.setTransactionSuccessful()
+            } finally {
+                writable.endTransaction()
+            }
+        }
     }
 
     private fun ensureConversation(db: android.database.sqlite.SQLiteDatabase, conversationId: Int, now: Long) {
@@ -379,6 +406,12 @@ class ChatRepositoryImpl(
             } else {
                 append("你是一个专业的地质学文献智能助手，擅长回答地质学相关问题。")
             }
+            append("请始终使用简体中文输出；如果启用思考模式，思考过程也必须使用简体中文，不要输出英文步骤名、英文解释或英文括注。")
+            val customInstruction = userPrefsDataStore.customInstruction.first().trim()
+            if (customInstruction.isNotBlank()) {
+                append("\n\n用户自定义指令：")
+                append(customInstruction)
+            }
             if (ragChunks.isNotEmpty()) {
                 append("\n\n以下是从用户上传文献中检索到的相关内容，请基于此回答，末尾标注【来源】：\n")
                 ragChunks.forEachIndexed { i, chunk ->
@@ -408,10 +441,9 @@ class ChatRepositoryImpl(
 
     private suspend fun searchByEmbedding(query: String): List<String> {
         return try {
-            // Generate query embedding
-            val queryEmbedding = embeddingClient.embedSingle(query).getOrNull() ?: return emptyList()
+            val apiKey = siliconFlowApiKey() ?: return emptyList()
+            val queryEmbedding = embeddingClient.embedSingle(query, apiKey).getOrNull() ?: return emptyList()
 
-            // Compare with all stored embeddings using cosine similarity
             val allEmbeddings = documentStore.getAllEmbeddings()
             if (allEmbeddings.isEmpty()) return emptyList()
 

@@ -10,6 +10,7 @@ data class ChatStreamRequest(
     val top_k: Int? = 5,
     val min_relevance_score: Float? = 0.0f,
     val web_search: Boolean? = false,
+    val enable_thinking: Boolean = false,
     val return_sources: Boolean? = true,
     val image_base64: String? = null,
     val history: List<ChatHistoryMessage> = emptyList()
@@ -29,6 +30,7 @@ data class ChatResponse(
 sealed class ChatEvent {
     data class Info(val conversation_id: Int?) : ChatEvent()
     data class Status(val message: String) : ChatEvent()
+    data class Thinking(val content: String) : ChatEvent()
     data class Content(val content: String) : ChatEvent()
     data class Sources(val sources: List<SourceDto>) : ChatEvent()
     data class Done(val message: String? = null) : ChatEvent()
@@ -41,6 +43,7 @@ data class SourceDto(
     val url: String? = null,
     val type: String = "document",
     val relevance_score: Float? = null,
+    val published_date: String? = null,
     val images: List<SourceImageDto>? = null
 )
 

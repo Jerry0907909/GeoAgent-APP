@@ -15,8 +15,9 @@ class SiliconFlowEmbeddingClient(private val client: OkHttpClient) {
     private val gson = Gson()
     private val jsonMediaType = "application/json".toMediaType()
     private val baseUrl = "https://api.siliconflow.cn/v1/embeddings"
-    private val apiKey = "sk-aprgegankxvkcydcyukrgqaipbspefwcjmkvgegjuesftbsv"
-    private val model = "BAAI/bge-m3"
+    private val model = com.geoagent.BuildConfig.SILICONFLOW_EMBED_MODEL
+    private val apiKey = com.geoagent.BuildConfig.SILICONFLOW_API_KEY
+    private val maxBatchSize = 20
 
     data class EmbeddingResponse(
         val data: List<EmbeddingItem> = emptyList()
@@ -27,7 +28,10 @@ class SiliconFlowEmbeddingClient(private val client: OkHttpClient) {
         val index: Int = 0
     )
 
-    suspend fun embed(texts: List<String>): Result<List<FloatArray>> {
+    suspend fun embed(texts: List<String>, apiKey: String): Result<List<FloatArray>> {
+        if (apiKey.isBlank()) {
+            return Result.failure(IllegalStateException("请先设置 SiliconFlow API Key"))
+        }
         return withContext(Dispatchers.IO) {
             try {
                 val requestBody = gson.toJson(mapOf(
@@ -67,7 +71,7 @@ class SiliconFlowEmbeddingClient(private val client: OkHttpClient) {
         }
     }
 
-    suspend fun embedSingle(text: String): Result<FloatArray> {
-        return embed(listOf(text)).map { it.first() }
+    suspend fun embedSingle(text: String, apiKey: String): Result<FloatArray> {
+        return embed(listOf(text), apiKey).map { it.first() }
     }
 }

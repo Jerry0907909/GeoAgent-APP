@@ -73,3 +73,19 @@ data class EmailHistoryResponse(
     val total: Int = 0,
     val items: List<EmailHistoryItem> = emptyList()
 )
+
+data class UserSettingsRequest(
+    val theme: String? = null,
+    val custom_instruction: String? = null,
+    val data_improve_enabled: Boolean? = null,
+    val incognito_enabled: Boolean? = null,
+    val memory_enabled: Boolean? = null,
+    val enable_memory: Boolean? = null,
+    val push_enabled: Boolean? = null,
+    val email_alerts_enabled: Boolean? = null
+)
+
+data class UserDataExportResponse(
+    val content: String = "",
+    val filename: String = "geoagent-export.json"
+)

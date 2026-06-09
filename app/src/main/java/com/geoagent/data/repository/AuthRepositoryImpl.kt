@@ -160,16 +160,25 @@ class AuthRepositoryImpl(
     override suspend fun isLoggedIn(): Boolean = !tokenDataStore.accessToken.first().isNullOrBlank()
 
     override suspend fun sendEmail(toAddr: String, subject: String, content: String): Result<EmailSendResponse> {
+        val normalizedTo = toAddr.trim()
+        if (!normalizedTo.contains("@")) {
+            return Result.failure(IllegalArgumentException("请输入有效收件人邮箱"))
+        }
+        val normalizedSubject = subject.trim().ifBlank { "来自 GeoAgent 的邮件" }
+        val sendResult = EmailSender.sendPlainText(normalizedTo, normalizedSubject, content)
+        if (sendResult.isFailure) {
+            return Result.failure(sendResult.exceptionOrNull() ?: IllegalStateException("邮件发送失败"))
+        }
         return runCatching {
             emailLogs.add(
                 EmailHistoryItem(
-                    to_addr = toAddr.trim(),
-                    subject = subject.trim(),
+                    to_addr = normalizedTo,
+                    subject = normalizedSubject,
                     content = content,
                     sent_at = System.currentTimeMillis()
                 )
             )
-            EmailSendResponse(success = true, message = "邮件已记录（本地模式）")
+            EmailSendResponse(success = true, message = "邮件已通过 QQ SMTP 发送")
         }
     }
 

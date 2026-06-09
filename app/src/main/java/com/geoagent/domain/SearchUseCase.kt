@@ -69,7 +69,14 @@ class SearchUseCase @Inject constructor(
                 SearchContext(
                     enhancedPrompt = buildEnhancedPrompt(question, results),
                     results = results,
-                    sources = results.map { SearchSource(title = it.title, url = it.url) }
+                    sources = results.map {
+                        SearchSource(
+                            title = it.title,
+                            url = it.url,
+                            content = it.content,
+                            publishedDate = it.publishedDate
+                        )
+                    }
                 )
             )
         )
@@ -134,7 +141,7 @@ class SearchUseCase @Inject constructor(
 object SearchPromptTools {
     const val DEFAULT_MAX_SOURCES = 6
     const val MAX_ADAPTIVE_SOURCES = 12
-    private const val MAX_PROMPT_CONTENT_CHARS = 280
+    private const val MAX_PROMPT_CONTENT_CHARS = 520
     private const val MAX_RETRY_CONTENT_CHARS = 120
     private const val MAX_FALLBACK_CONTENT_CHARS = 220
     private val navigationPhrases = listOf(
@@ -300,7 +307,7 @@ object SearchPromptTools {
         results: List<TavilySearchResult>
     ): String = buildString {
         appendLine("你正在执行智能搜索的综合生成。")
-        appendLine("请只依据下列中文互联网搜索结果，用简体中文整合回答用户问题。")
+        appendLine("请只依据下列中文互联网搜索结果，用简体中文整合回答用户问题，并尽量覆盖全部可用来源。")
         appendLine()
         appendLine("用户问题：$question")
         appendLine()
@@ -308,14 +315,17 @@ object SearchPromptTools {
         results.forEachIndexed { index, result ->
             appendLine("[${index + 1}] ${result.title}")
             appendLine("摘要：${result.content.compact(MAX_PROMPT_CONTENT_CHARS)}")
+            result.publishedDate?.takeIf { it.isNotBlank() }?.let { appendLine("日期：$it") }
             appendLine("链接：${result.url}")
         }
         appendLine()
         appendLine("输出要求：")
-        appendLine("1. 先用一句话给出总览，再按要点整合 3-6 条新闻。")
-        appendLine("2. 不要逐条粘贴搜索结果，不要输出网页导航、站点菜单、广告词或页面结构文字。")
-        appendLine("3. 每条要点用自己的话概括，并用 [1]、[2] 这样的编号标注依据。")
-        appendLine("4. 如果材料不足以确认具体事实，直接说明信息不足，不要编造。")
+        appendLine("1. 先用一句话给出总览，再按要点整合主要事实；如果有 8 个以上来源，至少输出 8 条要点。")
+        appendLine("2. 每条要点优先综合多个来源，不要只使用前几条结果；来源之间信息重复时可以合并，但不能忽略不同主题。")
+        appendLine("3. 不要逐条粘贴搜索结果，不要输出网页导航、站点菜单、广告词或页面结构文字。")
+        appendLine("4. 每条要点用自己的话概括，并用 [1]、[2] 这样的编号标注依据；同一要点可标注多个来源。")
+        appendLine("5. 不要在回答末尾输出 Sources、来源列表或裸链接，来源由界面组件展示。")
+        appendLine("6. 如果材料不足以确认具体事实，直接说明信息不足，不要编造。")
     }
 
     fun buildRetryPrompt(
@@ -328,6 +338,28 @@ object SearchPromptTools {
         appendLine()
         results.forEachIndexed { index, result ->
             appendLine("[${index + 1}] ${result.title}：${result.content.compact(MAX_RETRY_CONTENT_CHARS)}")
+        }
+    }
+
+    fun buildSearchPlanThinking(queries: List<String>): String {
+        if (queries.isEmpty()) return "正在联网检索相关网页。\n"
+        return buildString {
+            appendLine("正在联网检索相关网页。")
+            queries.take(6).forEachIndexed { index, query ->
+                appendLine("${index + 1}. $query")
+            }
+        }
+    }
+
+    fun buildSearchReadyThinking(results: List<TavilySearchResult>): String {
+        if (results.isEmpty()) return "未检索到可用网页，准备直接回答。\n"
+        return buildString {
+            appendLine("已检索到 ${results.size} 个网页，正在整理来源。")
+            results.take(MAX_ADAPTIVE_SOURCES).forEachIndexed { index, result ->
+                val date = result.publishedDate?.takeIf { it.isNotBlank() }?.let { "，$it" }.orEmpty()
+                appendLine("[${index + 1}] ${result.title}（${result.url.toDomain()}$date）")
+            }
+            appendLine("接下来会根据这些来源综合回答，并在正文中标注来源序号。")
         }
     }
 
@@ -409,6 +441,11 @@ object SearchPromptTools {
 
     private fun chineseCharCount(text: String): Int =
         text.count { it in '\u4e00'..'\u9fff' }
+
+    private fun String.toDomain(): String =
+        removePrefix("https://")
+            .removePrefix("http://")
+            .substringBefore("/")
 }
 
 data class SearchPlan(

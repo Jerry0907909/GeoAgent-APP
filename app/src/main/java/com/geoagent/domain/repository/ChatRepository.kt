@@ -15,4 +15,5 @@ interface ChatRepository {
     suspend fun getConversationMessages(conversationId: Int): Result<List<Message>>
     fun saveMessage(conversationId: Int, message: Message)
     fun updateConversationTitle(conversationId: Int, title: String)
+    suspend fun clearAllConversations(): Result<Unit>
 }

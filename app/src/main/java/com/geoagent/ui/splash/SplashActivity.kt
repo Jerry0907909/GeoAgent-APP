@@ -13,14 +13,16 @@ import com.geoagent.ui.auth.LoginActivity
 import com.geoagent.ui.chat.ChatActivity
 import com.geoagent.ui.motion.MotionUtils
 import com.geoagent.ui.theme.AppThemeHelper
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
 
+@AndroidEntryPoint
 class SplashActivity : AppCompatActivity() {
 
-    private val authRepository: AuthRepository by inject()
-    private val userPrefsDataStore: UserPrefsDataStore by inject()
+    @Inject lateinit var authRepository: AuthRepository
+    @Inject lateinit var userPrefsDataStore: UserPrefsDataStore
     private lateinit var logoLoading: LogoPulseLoadingView
 
     override fun onCreate(savedInstanceState: Bundle?) {

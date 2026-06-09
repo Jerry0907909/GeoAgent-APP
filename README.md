@@ -63,15 +63,14 @@ APP 启动后包含：
 
 ```
 app/src/main/java/com/geoagent/
-├── GeoAgentApp.kt                # Application 入口，启动 Koin + 内嵌服务器
+├── GeoAgentApp.kt                # Application 入口，启动 Hilt
 ├── agent/                        # 本地智能代理系统
 │   ├── AgentRegistry.kt          # IntentRouter + 内置 Agent 定义（6 个）
 │   └── UnitConversionAgent.kt    # 地质单位换算（深度/压力/温度/角度）
-├── di/                           # Koin 依赖注入模块（4 个）
-│   ├── NetworkModule.kt          # OkHttp + Retrofit + HTTP 缓存
-│   ├── RepositoryModule.kt       # Repository 接口→实现绑定
-│   ├── DataStoreModule.kt        # TokenDataStore / UserPrefsDataStore / AvatarLocalStore
-│   └── DatabaseModule.kt         # 空占位（Room 未集成）
+├── di/                           # Hilt 依赖注入模块
+│   ├── AppHiltModule.kt          # DataStore / Repository / 本地存储绑定
+│   ├── SearchHiltModule.kt       # OkHttp + Retrofit + Tavily 搜索缓存
+│   └── V2AgentHiltModule.kt      # V2 Agent / Tool / Runtime / Room memory
 ├── domain/
 │   ├── model/Models.kt           # User, Message, Conversation, UserPreferences
 │   └── repository/               # Repository 接口（Auth/Chat/Document/Search）
@@ -82,7 +81,6 @@ app/src/main/java/com/geoagent/
 │   │   ├── TokenAuthenticator.kt # 401 自动刷新 Token
 │   │   ├── SseClient.kt          # 对话 SSE 流式客户端
 │   │   ├── SearchSseClient.kt    # 搜索 SSE 流式客户端
-│   │   └── MockInterceptor.kt    # 本地 Mock 拦截器
 │   ├── local/                    # DataStore Preferences 持久化
 │   │   ├── TokenDataStore.kt     # JWT Token
 │   │   ├── UserPrefsDataStore.kt # 用户偏好（主题等）
@@ -166,11 +164,11 @@ SSE 事件通过 Kotlin Flow 发射，`ChatManager` 负责收集并更新 Recycl
 |----|------|------|
 | 语言 | Kotlin | 2.0.0 |
 | UI | Android Views (XML) + Material Components | 1.12.0 |
-| 架构 | Repository 模式（无 ViewModel 层） | — |
-| DI | Koin | 3.5.6 |
+| 架构 | MVVM + Repository 模式 | — |
+| DI | Hilt | 2.59.2 |
 | 网络 | Retrofit + OkHttp | 2.11.0 / 4.12.0 |
 | SSE | LaunchDarkly okhttp-eventsource | 4.1.1 |
 | 内嵌服务 | NanoHTTPD | 2.3.1 |
-| 本地存储 | DataStore Preferences | 1.1.1 |
+| 本地存储 | DataStore Preferences + Room | 1.1.1 / 2.8.4 |
 | 图片 | Coil | 2.6.0 |
 | Markdown | Markwon | 4.6.2 |

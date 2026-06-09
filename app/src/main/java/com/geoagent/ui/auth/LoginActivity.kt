@@ -27,12 +27,14 @@ import com.geoagent.ui.motion.MotionUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.textfield.TextInputEditText
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
 
+@AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
 
-    private val authRepository: AuthRepository by inject()
+    @Inject lateinit var authRepository: AuthRepository
 
     private var isLoginMode = true
     private var usePasswordLogin = false
@@ -313,12 +315,12 @@ class LoginActivity : AppCompatActivity() {
                     val msg = e.message.orEmpty()
                     val hasLocalCode = msg.contains("本地验证码")
                     if (hasLocalCode) {
-                        toastLong(msg)
+                        toast(msg)
                         cd(btnSendCode as TextView) { loginCooldown = false }
                     } else {
                         loginCooldown = false
                         resetSendBtn(btnSendCode as TextView)
-                        toastLong(msg.ifBlank { "验证码发送失败" })
+                        toast(msg.ifBlank { "验证码发送失败" })
                     }
                 }
             )
@@ -338,12 +340,12 @@ class LoginActivity : AppCompatActivity() {
                     val msg = e.message.orEmpty()
                     val hasLocalCode = msg.contains("本地验证码")
                     if (hasLocalCode) {
-                        toastLong(msg)
+                        toast(msg)
                         cd(btnRegSendCode as TextView) { registerCooldown = false }
                     } else {
                         registerCooldown = false
                         resetSendBtn(btnRegSendCode as TextView)
-                        toastLong(msg.ifBlank { "验证码发送失败" })
+                        toast(msg.ifBlank { "验证码发送失败" })
                     }
                 }
             )
@@ -429,8 +431,7 @@ class LoginActivity : AppCompatActivity() {
             authRepository.register(username, email, password, code).fold(
                 onSuccess = { navigateToChat() },
                 onFailure = { e ->
-                    btnRegister.isEnabled = true
-                    btnRegister.text = "注册"
+                    btnRegister.isEnabled = true; btnRegister.text = "注册"
                     toast(e.message ?: "注册失败")
                 }
             )
@@ -444,5 +445,9 @@ class LoginActivity : AppCompatActivity() {
 
     private fun resetBtn() { btnSubmit.isEnabled = true; btnSubmit.text = "登录" }
     private fun toast(msg: String) { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
-    private fun toastLong(msg: String) { Toast.makeText(this, msg, Toast.LENGTH_LONG).show() }
+
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        super.onDestroy()
+    }
 }

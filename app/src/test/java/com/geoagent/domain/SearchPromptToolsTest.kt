@@ -129,8 +129,26 @@ class SearchPromptToolsTest {
         assertTrue(prompt.contains("摘要：北京今日多云。"))
         assertTrue(prompt.contains("链接：https://example.com/weather"))
         assertTrue(prompt.contains("今天北京天气如何？"))
-        assertTrue(prompt.contains("只依据下列中文互联网搜索结果"))
+        assertTrue(prompt.contains("尽量覆盖全部可用来源"))
         assertTrue(prompt.contains("不要逐条粘贴搜索结果"))
+    }
+
+    @Test
+    fun buildEnhancedPromptAsksToUseAllSourcesForLargeSearches() {
+        val prompt = SearchPromptTools.buildEnhancedPrompt(
+            question = "最近有什么新闻",
+            results = (1..12).map { index ->
+                TavilySearchResult(
+                    title = "新闻 $index",
+                    url = "https://example.com/news/$index",
+                    content = "第 $index 条新闻的详细内容。".repeat(30)
+                )
+            }
+        )
+
+        assertTrue(prompt.contains("[12] 新闻 12"))
+        assertTrue(prompt.contains("至少输出 8 条要点"))
+        assertTrue(prompt.contains("不要只使用前几条结果"))
     }
 
     @Test

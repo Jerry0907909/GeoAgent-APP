@@ -11,12 +11,14 @@ import com.geoagent.domain.repository.AuthRepository
 import com.geoagent.ui.TransitionHelper
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
 
+@AndroidEntryPoint
 class RegisterActivity : AppCompatActivity() {
 
-    private val authRepository: AuthRepository by inject()
+    @Inject lateinit var authRepository: AuthRepository
     private var codeTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

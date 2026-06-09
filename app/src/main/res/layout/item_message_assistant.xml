@@ -7,6 +7,68 @@
     android:paddingHorizontal="4dp"
     android:paddingVertical="6dp">
 
+    <LinearLayout
+        android:id="@+id/layout_thinking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/row_thinking_header"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="4dp">
+
+            <TextView
+                android:id="@+id/tv_thinking_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_muted"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:id="@+id/iv_thinking_toggle"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginStart="6dp"
+                android:contentDescription="@null"
+                android:padding="3dp"
+                android:src="@drawable/ic_chevron_down"
+                android:tint="@color/text_muted" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_thinking_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="12dp"
+                android:background="@color/outline" />
+
+            <TextView
+                android:id="@+id/tv_thinking_content"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxWidth="320dp"
+                android:paddingEnd="4dp"
+                android:textColor="@color/text_muted"
+                android:textSize="14sp"
+                android:lineSpacingExtra="5dp" />
+        </LinearLayout>
+    </LinearLayout>
+
     <TextView
         android:id="@+id/tv_content"
         android:layout_width="wrap_content"
@@ -18,12 +80,14 @@
         android:textSize="15sp"
         android:lineSpacingExtra="4dp"
         android:autoLink="web"
-        android:linksClickable="true" />
+        android:linksClickable="true"
+        android:textIsSelectable="false" />
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/layout_sources"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
+        android:minHeight="44dp"
         android:visibility="gone" />
 </LinearLayout>

@@ -11,13 +11,15 @@ import com.geoagent.ui.motion.MotionUtils
 import com.geoagent.ui.theme.AppThemeHelper
 import com.geoagent.ui.theme.AppThemeMode
 import com.google.android.material.appbar.MaterialToolbar
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
 
+@AndroidEntryPoint
 class AppearanceActivity : AppCompatActivity() {
 
-    private val userPrefsDataStore: UserPrefsDataStore by inject()
+    @Inject lateinit var userPrefsDataStore: UserPrefsDataStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

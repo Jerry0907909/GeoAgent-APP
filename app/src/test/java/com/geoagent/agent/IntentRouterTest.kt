@@ -74,28 +74,35 @@ class IntentRouterTest {
     @Test
     fun routeToRag_whenDocumentKnowledgeQuery() {
         val result = router.route("根据文献资料回答这个问题")
-        assertEquals(BuiltinAgents.RAG.name, result.agentName)
+        assertEquals("v2_rag", result.agentName)
         assertEquals(RouteDisposition.DIRECT, result.disposition)
     }
 
     @Test
     fun routeToSearch_whenWebSearchQuery() {
         val result = router.route("帮我联网搜索今天的地质新闻")
-        assertEquals(BuiltinAgents.SEARCH.name, result.agentName)
+        assertEquals("v2_search", result.agentName)
         assertEquals(RouteDisposition.DIRECT, result.disposition)
     }
 
     @Test
     fun routeToEmail_whenSendMailQuery() {
         val result = router.route("请给 test@example.com 发邮件，主题：测试，内容：你好")
-        assertEquals(BuiltinAgents.EMAIL.name, result.agentName)
+        assertEquals("v2_email", result.agentName)
+        assertEquals(RouteDisposition.DIRECT, result.disposition)
+    }
+
+    @Test
+    fun routeToEmail_whenMailRequestAlsoMentionsNews() {
+        val result = router.route("把这些新闻 发送给1149201272@qq.com")
+        assertEquals("v2_email", result.agentName)
         assertEquals(RouteDisposition.DIRECT, result.disposition)
     }
 
     @Test
     fun routeToEmail_whenHistoryQuery() {
         val result = router.route("查看邮件发送历史")
-        assertEquals(BuiltinAgents.EMAIL.name, result.agentName)
+        assertEquals("v2_email", result.agentName)
         assertTrue(result.disposition == RouteDisposition.DIRECT || result.disposition == RouteDisposition.CONFIRM)
     }
 }

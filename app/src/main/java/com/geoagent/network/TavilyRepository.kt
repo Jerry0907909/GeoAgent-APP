@@ -29,7 +29,7 @@ class TavilyRepository @Inject constructor(
         val normalizedQuery = query.trim()
         if (normalizedQuery.isBlank()) return Result.success(emptyList())
         val now = System.currentTimeMillis()
-        val queryHash = normalizedQuery.cacheHash()
+        val queryHash = "$normalizedQuery#$maxResults".cacheHash()
 
         getMemory(queryHash, now)?.let { return Result.success(it) }
         getRoom(queryHash, now)?.let { cached ->
@@ -103,7 +103,12 @@ class TavilyRepository @Inject constructor(
                     val url = item.url.orEmpty().trim()
                     val content = (item.content ?: item.rawContent).orEmpty().trim()
                     if (title.isBlank() || url.isBlank() || content.isBlank()) null
-                    else TavilySearchResult(title = title, url = url, content = content)
+                    else TavilySearchResult(
+                        title = title,
+                        url = url,
+                        content = content,
+                        publishedDate = item.publishedDate?.trim()?.takeIf { it.isNotBlank() }
+                    )
                 }
             } catch (e: Exception) {
                 lastError = e

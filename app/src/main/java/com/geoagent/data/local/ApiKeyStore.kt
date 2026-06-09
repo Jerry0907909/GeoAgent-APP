@@ -11,12 +11,14 @@ class ApiKeyStore(private val context: Context) {
     companion object {
         private val DEEPSEEK_KEY = stringPreferencesKey("deepseek_api_key")
         private val TAVILY_KEY = stringPreferencesKey("tavily_api_key")
+        private val SILICONFLOW_KEY = stringPreferencesKey("siliconflow_api_key")
         private val USER_DISPLAY_NAME = stringPreferencesKey("user_display_name")
         private val CURRENT_USER_EMAIL = stringPreferencesKey("current_user_email")
     }
 
     val deepseekKey: Flow<String?> = context.dataStore.data.map { it[DEEPSEEK_KEY] }
     val tavilyKey: Flow<String?> = context.dataStore.data.map { it[TAVILY_KEY] }
+    val siliconFlowKey: Flow<String?> = context.dataStore.data.map { it[SILICONFLOW_KEY] }
     val displayName: Flow<String?> = context.dataStore.data.map { it[USER_DISPLAY_NAME] }
     val currentUserEmail: Flow<String?> = context.dataStore.data.map { it[CURRENT_USER_EMAIL] }
 
@@ -26,6 +28,10 @@ class ApiKeyStore(private val context: Context) {
 
     suspend fun saveTavilyKey(key: String) {
         context.dataStore.edit { it[TAVILY_KEY] = key.trim() }
+    }
+
+    suspend fun saveSiliconFlowKey(key: String) {
+        context.dataStore.edit { it[SILICONFLOW_KEY] = key.trim() }
     }
 
     suspend fun saveDisplayName(name: String) {

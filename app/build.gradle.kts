@@ -21,9 +21,7 @@ if (envFile.exists()) {
 android {
     namespace = "com.geoagent"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
     }
 
     buildFeatures {
@@ -40,8 +38,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "DEEPSEEK_API_KEY", "\"${envVars["DEEPSEEK_API_KEY"] ?: ""}\"")
         buildConfigField("String", "TAVILY_API_KEY", "\"${envVars["TAVILY_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "SILICONFLOW_API_KEY", "\"${envVars["SILICONFLOW_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "SILICONFLOW_CHAT_MODEL", "\"${envVars["SILICONFLOW_CHAT_MODEL"] ?: "Qwen/Qwen3.5-9B"}\"")
+        buildConfigField("String", "SILICONFLOW_EMBED_MODEL", "\"${envVars["SILICONFLOW_EMBED_MODEL"] ?: "BAAI/bge-m3"}\"")
         buildConfigField("String", "SMTP_HOST", "\"${envVars["SMTP_HOST"] ?: ""}\"")
         buildConfigField("int", "SMTP_PORT", "${envVars["SMTP_PORT"] ?: "465"}")
         buildConfigField("String", "SMTP_USER", "\"${envVars["SMTP_USER"] ?: ""}\"")
@@ -58,6 +58,14 @@ android {
             )
         }
     }
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/LICENSE.md",
+                "META-INF/NOTICE.md"
+            )
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -70,6 +78,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)
@@ -80,8 +89,6 @@ dependencies {
     implementation(libs.fragment.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.ktx)
-
-    implementation(libs.koin.android)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
@@ -101,6 +108,8 @@ dependencies {
 
     implementation(libs.mlkit.text.recognition)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation(libs.android.mail)
+    implementation(libs.android.activation)
 
     implementation(libs.coil)
     implementation(libs.markwon.core)

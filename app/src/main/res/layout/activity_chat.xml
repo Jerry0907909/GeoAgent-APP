@@ -4,20 +4,20 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="@color/background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/chat_root"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFFFF"
+        android:background="@color/background"
         android:fitsSystemWindows="true">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/top_bar"
             android:layout_width="0dp"
             android:layout_height="56dp"
-            android:background="#FFFFFF"
+            android:background="@color/background"
             android:paddingHorizontal="12dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -35,7 +35,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:tint="#333333" />
+                app:tint="@color/on_background" />
 
             <ImageView
                 android:id="@+id/btn_new_chat"
@@ -49,7 +49,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:tint="#333333" />
+                app:tint="@color/on_background" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -103,7 +103,7 @@
                     android:layout_marginStart="8dp"
                     android:gravity="center"
                     android:text="@string/empty_chat_hint_chat"
-                    android:textColor="#212121"
+                    android:textColor="@color/on_background"
                     android:textSize="20sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -148,7 +148,7 @@
                             android:focusable="true"
                             android:gravity="center"
                             android:text="@string/mode_chat"
-                            android:textColor="#1E88E5"
+                            android:textColor="@color/primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -162,7 +162,7 @@
                             android:focusable="true"
                             android:gravity="center"
                             android:text="@string/mode_rag"
-                            android:textColor="#9E9E9E"
+                            android:textColor="@color/text_secondary"
                             android:textSize="15sp" />
                     </LinearLayout>
                 </FrameLayout>
@@ -175,7 +175,7 @@
                 android:layout_marginTop="12dp"
                 android:gravity="center"
                 android:text="@string/mode_hint_chat"
-                android:textColor="#9E9E9E"
+                android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -201,7 +201,7 @@
                 android:background="@drawable/bg_status_pill"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="3dp"
-                android:textColor="#1E88E5"
+                android:textColor="@color/primary"
                 android:textSize="11sp"
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
@@ -218,8 +218,8 @@
                 android:maxLines="3"
                 android:minHeight="36dp"
                 android:paddingVertical="0dp"
-                android:textColor="#212121"
-                android:textColorHint="#BDBDBD"
+                android:textColor="@color/on_background"
+                android:textColorHint="@color/hint_text"
                 android:textSize="16sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -236,41 +236,67 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/et_message">
 
-                <FrameLayout
-                    android:layout_width="112dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center_vertical">
-
-                    <TextView
-                        android:id="@+id/chip_web_search"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/bg_chip_active_blue"
-                        android:drawableStart="@drawable/ic_globe"
-                        android:drawablePadding="6dp"
-                        android:gravity="center"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="14dp"
-                        android:text="@string/smart_search"
-                        android:textColor="#1E88E5"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/chip_rag_settings"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/bg_chip_outline_gray"
-                        android:gravity="center"
-                        android:text="检索设置"
-                        android:textColor="#757575"
-                        android:textSize="14sp"
-                        android:visibility="invisible" />
-                </FrameLayout>
-
-                <Space
+                <HorizontalScrollView
                     android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/chip_deep_thinking"
+                            android:layout_width="100dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_chip_outline_gray"
+                            android:drawableStart="@drawable/ic_deep_thinking"
+                            android:drawablePadding="5dp"
+                            android:gravity="center"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="10dp"
+                            android:singleLine="true"
+                            android:text="@string/deep_thinking"
+                            android:textColor="@color/chip_text"
+                            android:textSize="13sp" />
+
+                        <FrameLayout
+                            android:layout_width="100dp"
+                            android:layout_height="match_parent">
+
+                            <TextView
+                                android:id="@+id/chip_web_search"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_chip_active_blue"
+                                android:drawableStart="@drawable/ic_globe"
+                                android:drawablePadding="5dp"
+                                android:gravity="center"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="10dp"
+                                android:singleLine="true"
+                                android:text="@string/smart_search"
+                                android:textColor="@color/primary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/chip_rag_settings"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_chip_outline_gray"
+                                android:gravity="center"
+                                android:singleLine="true"
+                                android:text="检索设置"
+                                android:textColor="@color/chip_text"
+                                android:textSize="13sp"
+                                android:visibility="invisible" />
+                        </FrameLayout>
+                    </LinearLayout>
+                </HorizontalScrollView>
 
                 <ImageView
                     android:id="@+id/btn_add_image"
@@ -281,7 +307,7 @@
                     android:focusable="true"
                     android:padding="9dp"
                     android:src="@drawable/ic_plus"
-                    app:tint="#333333" />
+                    app:tint="@color/on_background" />
 
                 <ImageView
                     android:id="@+id/btn_send"
@@ -294,7 +320,7 @@
                     android:focusable="true"
                     android:padding="9dp"
                     android:src="@drawable/ic_send_arrow"
-                    app:tint="#BDBDBD" />
+                    app:tint="@color/hint_text" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -303,10 +329,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="#FFFFFF"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#E0E0E0"
+                app:strokeColor="@color/outline"
                 app:strokeWidth="1dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -322,7 +348,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="文档检索数量"
-                        android:textColor="#757575"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
                     <com.google.android.material.slider.Slider
@@ -332,15 +358,15 @@
                         android:stepSize="1"
                         android:valueFrom="1"
                         android:valueTo="10"
-                        app:thumbColor="#1E88E5"
-                        app:trackColorActive="#1E88E5"
-                        app:trackColorInactive="#E0E0E0" />
+                        app:thumbColor="@color/primary"
+                        app:trackColorActive="@color/primary"
+                        app:trackColorInactive="@color/outline" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="最小相关度"
-                        android:textColor="#757575"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
                     <com.google.android.material.slider.Slider
@@ -350,9 +376,9 @@
                         android:stepSize="0.01"
                         android:valueFrom="0"
                         android:valueTo="1"
-                        app:thumbColor="#1E88E5"
-                        app:trackColorActive="#1E88E5"
-                        app:trackColorInactive="#E0E0E0" />
+                        app:thumbColor="@color/primary"
+                        app:trackColorActive="@color/primary"
+                        app:trackColorInactive="@color/outline" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </androidx.constraintlayout.widget.ConstraintLayout>

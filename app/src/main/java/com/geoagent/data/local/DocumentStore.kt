@@ -61,12 +61,13 @@ class DocumentStore(context: Context) {
                     put("char_offset", chunk.charOffset)
                 })
             }
-            for ((i, vec) in embeddings.withIndex()) {
+            val safeCount = embeddings.size.coerceAtMost(chunks.size)
+            for (i in 0 until safeCount) {
                 val chunkId = "${doc.id}_${chunks[i].index}"
                 db.insert("embeddings", null, ContentValues().apply {
                     put("chunk_id", chunkId)
                     put("document_id", doc.id)
-                    put("vector_json", gson.toJson(vec.toList()))
+                    put("vector_json", gson.toJson(embeddings[i].toList()))
                 })
             }
             db.setTransactionSuccessful()
@@ -81,6 +82,18 @@ class DocumentStore(context: Context) {
             db.delete("embeddings", "document_id = ?", arrayOf(docId))
             db.delete("chunks", "document_id = ?", arrayOf(docId))
             db.delete("documents", "id = ?", arrayOf(docId))
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    fun deleteAllDocuments() {
+        db.beginTransaction()
+        try {
+            db.delete("embeddings", null, null)
+            db.delete("chunks", null, null)
+            db.delete("documents", null, null)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()

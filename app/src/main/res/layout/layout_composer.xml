@@ -81,12 +81,10 @@
                             android:layout_height="34dp"
                             android:layout_marginEnd="6dp"
                             android:checkable="true"
-                            android:clickable="false"
                             android:text="@string/deep_thinking"
                             android:textSize="13sp"
                             app:chipIcon="@drawable/ic_deep_thinking"
                             app:chipIconSize="15dp"
-                            app:chipIconTint="@color/chip_assist_text"
                             app:chipIconVisible="true" />
 
                         <com.google.android.material.chip.Chip
@@ -100,8 +98,7 @@
                             android:textSize="13sp"
                             app:chipIcon="@drawable/ic_globe"
                             app:chipIconVisible="true"
-                            app:chipIconSize="15dp"
-                            app:chipIconTint="@color/chip_assist_text" />
+                            app:chipIconSize="15dp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_rag_settings"

@@ -206,48 +206,6 @@ val DEFAULT_CONTEXT_EXIT_KEYWORDS = setOf(
 )
 
 object BuiltinAgents {
-    val CHAT = AgentMeta(
-        name = "chat",
-        displayName = "通用对话",
-        description = "默认通用问答",
-        keywords = setOf("聊聊", "解释", "介绍", "问答"),
-        semanticHints = setOf("chat", "talk"),
-        priority = 120,
-        requiresAuth = false,
-        ttlMinutes = 1
-    )
-
-    val RAG = AgentMeta(
-        name = "rag",
-        displayName = "知识库检索",
-        description = "基于文档知识库进行检索问答",
-        keywords = setOf("文献", "文档", "资料", "知识库", "检索", "根据文档", "资料中", "rag"),
-        regexPatterns = listOf(
-            Regex("""(根据|结合).*(文档|文献|资料|知识库)""", RegexOption.IGNORE_CASE),
-            Regex("""(文献|文档|资料).*(提到|说到|写到|指出)""", RegexOption.IGNORE_CASE),
-            Regex("""(检索|查询).*(知识库|文献|文档)""", RegexOption.IGNORE_CASE)
-        ),
-        semanticHints = setOf("知识库", "文献", "检索"),
-        priority = 20,
-        requiresAuth = true,
-        ttlMinutes = 5
-    )
-
-    val SEARCH = AgentMeta(
-        name = "search",
-        displayName = "联网搜索",
-        description = "进行联网深度搜索并综合回答",
-        keywords = setOf("联网", "搜索", "查一下", "查找", "网上", "最新", "新闻", "tavily"),
-        regexPatterns = listOf(
-            Regex("""(帮我)?(联网|上网|网上).*(搜索|查|找)""", RegexOption.IGNORE_CASE),
-            Regex("""(最新|今天|近期).*(消息|进展|新闻|动态)""", RegexOption.IGNORE_CASE),
-            Regex("""(搜索|查找|查询).*(一下|一下子|看看)?""", RegexOption.IGNORE_CASE)
-        ),
-        semanticHints = setOf("联网搜索", "deep search", "search"),
-        priority = 30,
-        requiresAuth = true,
-        ttlMinutes = 3
-    )
 
     val DOCUMENT = AgentMeta(
         name = "document",
@@ -280,28 +238,21 @@ object BuiltinAgents {
         ttlMinutes = 3
     )
 
-    val EMAIL = AgentMeta(
-        name = "email",
-        displayName = "邮件助手",
-        description = "发送邮件、查询发送历史（后端直发）",
-        keywords = setOf("发邮件", "发送邮件", "邮箱", "email", "mail", "邮件通知", "给我发一封", "邮件历史", "发送历史", "邮件记录"),
-        regexPatterns = listOf(
-            Regex("""(发|发送).*(邮件|邮箱|email|mail)""", RegexOption.IGNORE_CASE),
-            Regex("""(邮件|邮箱).*(历史|记录)""", RegexOption.IGNORE_CASE),
-            Regex("""[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}""", RegexOption.IGNORE_CASE)
-        ),
-        semanticHints = setOf("邮件", "发信", "send email", "history"),
-        priority = 25,
-        requiresAuth = false,
-        ttlMinutes = 3
+    /** V2 agents bridged into V1 AgentMeta format. */
+    val V2_BRIDGED_AGENTS: List<AgentMeta> = listOf(
+        AgentMeta("v2_search", "联网搜索", "Tavily-backed web search and synthesis", setOf("搜索", "联网", "tavily", "最新", "新闻"), listOf(Regex("""(联网|搜索|查一下|最新|新闻)""")), setOf("search", "tavily"), 10, true, 3),
+        AgentMeta("v2_rag", "知识库检索", "Local knowledge-base retrieval answering", setOf("知识库", "文档", "文献", "资料"), listOf(Regex("""(知识库|文档|文献|资料).*(检索|回答|查询)?""")), setOf("rag", "检索"), 11, true, 5),
+        AgentMeta("v2_research", "研究分析", "Research planning, evidence gathering, and source synthesis", setOf("研究", "调研", "综述", "论文研究", "资料整理", "分析"), listOf(Regex("""(研究|调研|综述|资料整理|分析)""")), setOf("研究", "调研"), 12, true, 5),
+        AgentMeta("v2_schedule", "日程安排", "Schedule planning and time-block arrangement", setOf("安排", "排期", "时间表", "计划表"), listOf(Regex("""(安排|排期|时间表|schedule)""", RegexOption.IGNORE_CASE)), setOf("安排"), 31, true, 3),
+        AgentMeta("v2_task", "任务管理", "Task capture, tracking, and decomposition", setOf("任务", "待办", "todo", "事项", "清单"), listOf(Regex("""(任务|待办|todo|清单)""", RegexOption.IGNORE_CASE)), setOf("任务", "待办"), 32, true, 3),
+        AgentMeta("v2_email", "邮件助手", "QQ SMTP email sending and mail drafting", setOf("邮件", "邮箱", "email", "smtp", "发信", "发送给", "发给"), listOf(Regex("""(发|发送).*(邮件|email|邮箱)|(?:发给|发送给|发送至|发至|给)\s*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+""", RegexOption.IGNORE_CASE)), setOf("邮件", "email", "发送给", "发给"), 8, false, 3),
+        AgentMeta("v2_pdf", "PDF解析", "PDF parsing, summarization, and extraction", setOf("pdf", "PDF", "提取pdf", "解析pdf"), listOf(Regex("""pdf|解析.*文件|提取.*文件""", RegexOption.IGNORE_CASE)), setOf("pdf"), 19, true, 3),
+        AgentMeta("v2_file", "文件管理", "File intake, parsing, and local document operations", setOf("文件", "上传", "打开文件", "保存", "导入"), listOf(Regex("""(文件|上传|导入|保存)"""), Regex("""(读取|查看|打开|删除|移除).*\.[a-zA-Z0-9]{2,5}""", RegexOption.IGNORE_CASE)), setOf("文件"), 42, true, 3)
     )
 
     val ALL: List<AgentMeta> = listOf(
         UnitConversionAgent.META,
-        EMAIL,
-        RAG,
-        SEARCH,
         DOCUMENT,
         SETTINGS
-    )
+    ) + V2_BRIDGED_AGENTS
 }

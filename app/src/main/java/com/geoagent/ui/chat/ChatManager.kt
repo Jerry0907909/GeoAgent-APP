@@ -5,13 +5,24 @@ import com.geoagent.agent.AgentMeta
 import com.geoagent.agent.BuiltinAgents
 import com.geoagent.agent.IntentRouter
 import com.geoagent.agent.RouteDisposition
+import com.geoagent.agent.RouteResult
 import com.geoagent.agent.SessionContextManager
 import com.geoagent.agent.UnitConversionAgent
+import com.geoagent.agent.v2.V2OrchestrationResult
+import com.geoagent.agent.v2.V2Orchestrator
+import com.geoagent.agent.v2.V2PipelineStage
+import com.geoagent.agent.v2.V2RuntimeHistoryMessage
+import com.geoagent.agent.v2.V2RuntimeOrchestrator
+import com.geoagent.agent.v2.V2RuntimeRequest
+import com.geoagent.agent.v2.V2AgentId
+import com.geoagent.agent.v2.V2AgentRunStatus
+import com.geoagent.agent.v2.V2StageEvent
 import com.geoagent.data.api.dto.ChatEvent
 import com.geoagent.data.api.dto.ChatHistoryMessage
 import com.geoagent.data.api.dto.ChatStreamRequest
 import com.geoagent.data.api.dto.SourceDto
 import com.geoagent.domain.model.ChatMode
+import com.geoagent.domain.model.Conversation
 import com.geoagent.domain.model.Message
 import com.geoagent.domain.repository.AuthRepository
 import com.geoagent.domain.repository.ChatRepository
@@ -34,14 +45,19 @@ data class ChatUiState(
     val statusMessage: String? = null,
     val currentMode: ChatMode = ChatMode.CHAT,
     val conversationId: Int? = null,
+    val conversations: List<Conversation> = emptyList(),
+    val conversationError: String? = null,
     val webSearchEnabled: Boolean = false,
+    val deepThinkingEnabled: Boolean = false,
     val ragTopK: Int = 5,
     val ragMinRelevanceScore: Float = 0.0f,
     val ragSettingsExpanded: Boolean = false,
     val activeAgent: String? = null,
     val availableAgents: List<AgentMeta> = BuiltinAgents.ALL,
     val pendingRouteConfirmation: PendingRouteConfirmation? = null,
-    val pendingAgentNavigation: AgentNavigationTarget? = null
+    val pendingAgentNavigation: AgentNavigationTarget? = null,
+    val pendingSystemAction: V2SystemAction? = null,
+    val v2Trace: V2OrchestrationResult? = null
 )
 
 data class PendingRouteConfirmation(
@@ -64,7 +80,9 @@ data class EmailDraft(
 class ChatManager(
     private val scope: CoroutineScope,
     private val chatRepository: ChatRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val v2Orchestrator: V2Orchestrator,
+    private val v2RuntimeOrchestrator: V2RuntimeOrchestrator
 ) {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -80,6 +98,7 @@ class ChatManager(
 
     private var sseJob: Job? = null
     private var streamRenderJob: Job? = null
+    private var activeAssistantTimestamp: Long? = null
     private val pendingStreamContent = StringBuilder()
 
     fun loadConversation(conversationId: Int) {
@@ -88,6 +107,7 @@ class ChatManager(
             return
         }
         sseJob?.cancel()
+        activeAssistantTimestamp = null
         stopStreamRenderer()
         _uiState.update {
             ChatUiState(
@@ -117,6 +137,7 @@ class ChatManager(
 
     fun resetChat() {
         sseJob?.cancel()
+        activeAssistantTimestamp = null
         stopStreamRenderer()
         _uiState.update {
             ChatUiState(
@@ -133,6 +154,10 @@ class ChatManager(
         _uiState.update { it.copy(webSearchEnabled = enabled) }
     }
 
+    fun setDeepThinkingEnabled(enabled: Boolean) {
+        _uiState.update { it.copy(deepThinkingEnabled = enabled) }
+    }
+
     fun sendMessage(text: String, imageBase64: String? = null) {
         val pending = _uiState.value.pendingRouteConfirmation
         if (pending != null && imageBase64 == null) {
@@ -140,88 +165,39 @@ class ChatManager(
             if (handled) return
         }
 
+        val useExplicitWebSearch = _uiState.value.currentMode == ChatMode.CHAT && _uiState.value.webSearchEnabled
         val route = intentRouter.route(
             input = text,
             sessionContext = sessionContextManager.snapshot(),
             isAuthenticated = true
         )
+        val explicitEmailRoute = route.agentName == "v2_email" && route.disposition == RouteDisposition.DIRECT
 
         if (route.shouldClearContext) {
             sessionContextManager.clear()
             syncActiveAgent()
         }
 
-        val directRoutedAgent = if (route.disposition == RouteDisposition.DIRECT) route.agentName else null
+        val directRoutedAgent = if (
+            route.disposition == RouteDisposition.DIRECT &&
+            !(useExplicitWebSearch && route.agentName?.startsWith("v2_") == true)
+        ) route.agentName else null
 
-        if (route.disposition == RouteDisposition.DIRECT) {
-            when (route.agentName) {
-                UnitConversionAgent.META.name -> {
-                    sessionContextManager.activate(UnitConversionAgent.META.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    dispatchConversionAgent(text)
-                    return
-                }
-                BuiltinAgents.RAG.name -> {
-                    sessionContextManager.activate(BuiltinAgents.RAG.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    _uiState.update { state ->
-                        state.copy(
-                            currentMode = ChatMode.RAG,
-                            webSearchEnabled = false
-                        )
-                    }
-                }
-                BuiltinAgents.SEARCH.name -> {
-                    sessionContextManager.activate(BuiltinAgents.SEARCH.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    _uiState.update { state ->
-                        state.copy(
-                            currentMode = ChatMode.CHAT,
-                            webSearchEnabled = true
-                        )
-                    }
-                }
-                BuiltinAgents.EMAIL.name -> {
-                    sessionContextManager.activate(BuiltinAgents.EMAIL.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
-                    if (isEmailHistoryIntent(text)) {
-                        _uiState.update {
-                            it.copy(
-                                messages = it.messages + userMsg,
-                                pendingRouteConfirmation = null,
-                                isLoading = true,
-                                statusMessage = "正在查询邮件历史…"
-                            )
-                        }
-                        fetchEmailHistory()
-                        return
-                    }
-                    val draft = extractEmailDraft(text)
-                    if (draft == null) {
-                        val aiMsg = Message(
-                            role = Message.ROLE_ASSISTANT,
-                            content = "我已识别为邮件发送需求，但还缺少收件人邮箱。请补充如：给 xxx@qq.com 发邮件，主题是..., 内容是..."
-                        )
-                        _uiState.update {
-                            it.copy(
-                                messages = it.messages + userMsg + aiMsg,
-                                pendingRouteConfirmation = null
-                            )
-                        }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                messages = it.messages + userMsg,
-                                pendingRouteConfirmation = null,
-                                isLoading = true,
-                                statusMessage = "正在发送邮件…"
-                            )
-                        }
-                        sendEmailByBackend(draft)
-                    }
-                    return
-                }
+        if (route.shouldUseLocalDirectAgentBeforeV2()) {
+            sessionContextManager.activate(UnitConversionAgent.META.name, System.currentTimeMillis())
+            syncActiveAgent()
+            dispatchConversionAgent(text)
+            return
+        }
+
+        val v2Plan = v2Orchestrator.plan(text)
+        if ((!useExplicitWebSearch || explicitEmailRoute) && v2Plan.tasks.any { it.agentId.shouldAnswerWithV2Runtime(text) }) {
+            dispatchV2RuntimeMessage(text, imageBase64)
+            return
+        }
+
+        if (directRoutedAgent != null) {
+            when (directRoutedAgent) {
                 BuiltinAgents.DOCUMENT.name -> {
                     sessionContextManager.activate(BuiltinAgents.DOCUMENT.name, System.currentTimeMillis())
                     syncActiveAgent()
@@ -288,11 +264,18 @@ class ChatManager(
             syncActiveAgent()
         }
         val mode = _uiState.value.currentMode
+        val thinkingEnabled = _uiState.value.deepThinkingEnabled
         val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
+        val assistantMsg = Message(
+            role = Message.ROLE_ASSISTANT,
+            content = "",
+            thinkingStartedAt = if (thinkingEnabled) System.currentTimeMillis() else null
+        )
+        activeAssistantTimestamp = assistantMsg.timestamp
         val convId = _uiState.value.conversationId ?: (System.currentTimeMillis() % 100000).toInt()
         _uiState.update {
             it.copy(
-                messages = it.messages + userMsg,
+                messages = it.messages + userMsg + assistantMsg,
                 isLoading = true,
                 error = null,
                 retrievalHint = null,
@@ -307,6 +290,7 @@ class ChatManager(
         stopStreamRenderer()
         sseJob = scope.launch {
             startStreamRenderer()
+            var pendingSources = emptyList<SourceDto>()
             chatRepository.streamChat(
                 ChatStreamRequest(
                     message = text,
@@ -315,6 +299,7 @@ class ChatManager(
                     top_k = if (mode == ChatMode.RAG) _uiState.value.ragTopK else null,
                     min_relevance_score = if (mode == ChatMode.RAG) _uiState.value.ragMinRelevanceScore else null,
                     web_search = if (mode == ChatMode.CHAT) _uiState.value.webSearchEnabled else false,
+                    enable_thinking = thinkingEnabled,
                     return_sources = true,
                     image_base64 = imageBase64,
                     history = _uiState.value.messages
@@ -325,7 +310,10 @@ class ChatManager(
             ).catch { e ->
                 flushPendingStreamContent()
                 stopStreamRenderer()
-                _uiState.update { it.copy(error = e.message, isLoading = false, statusMessage = null) }
+                activeAssistantTimestamp = null
+                _uiState.update { state ->
+                    finishThinking(state).copy(error = e.message, isLoading = false, statusMessage = null)
+                }
             }.collect { event ->
                 when (event) {
                     is ChatEvent.Info -> {
@@ -334,6 +322,9 @@ class ChatManager(
                     is ChatEvent.Status -> {
                         _uiState.update { it.copy(statusMessage = event.message) }
                     }
+                    is ChatEvent.Thinking -> {
+                        appendThinkingContent(event.content)
+                    }
                     is ChatEvent.Content -> {
                         synchronized(pendingStreamContent) {
                             pendingStreamContent.append(event.content)
@@ -341,36 +332,131 @@ class ChatManager(
                     }
                     is ChatEvent.Sources -> {
                         flushPendingStreamContent()
-                        _uiState.update { state ->
-                            attachSourcesToLastAssistant(state, event.sources)
-                        }
+                        pendingSources = mergeSources(pendingSources, event.sources)
                     }
                     is ChatEvent.Done -> {
                         flushPendingStreamContent()
                         stopStreamRenderer()
+                        activeAssistantTimestamp = null
                         _uiState.update { state ->
-                            val hint = if (state.currentMode == ChatMode.RAG) {
-                                val assistant = state.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
+                            val withSources = attachSourcesToLastAssistant(state, pendingSources)
+                            val hint = if (withSources.currentMode == ChatMode.RAG) {
+                                val assistant = withSources.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
                                 if (assistant != null && assistant.sources.isEmpty()) {
                                     "未检索到文献来源：请确认已上传文档或联网搜索获取参考资料。"
                                 } else null
                             } else null
-                            val lastAssistant = state.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
-                            if (lastAssistant != null && state.conversationId != null) {
-                                chatRepository.saveMessage(state.conversationId!!, lastAssistant)
+                            val lastAssistant = withSources.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
+                            if (lastAssistant != null && withSources.conversationId != null) {
+                                chatRepository.saveMessage(withSources.conversationId, lastAssistant)
                             }
-                            state.copy(isLoading = false, statusMessage = null, retrievalHint = hint)
+                            finishThinking(withSources).copy(isLoading = false, statusMessage = null, retrievalHint = hint)
                         }
                     }
                     is ChatEvent.Error -> {
                         flushPendingStreamContent()
                         stopStreamRenderer()
-                        _uiState.update {
-                            it.copy(error = event.message, isLoading = false, statusMessage = null)
+                        activeAssistantTimestamp = null
+                        _uiState.update { state ->
+                            finishThinking(state).copy(error = event.message, isLoading = false, statusMessage = null)
                         }
                     }
                 }
             }
+        }
+    }
+
+    private fun dispatchV2RuntimeMessage(text: String, imageBase64: String?) {
+        val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
+        val convId = _uiState.value.conversationId ?: (System.currentTimeMillis() % 100000).toInt()
+        val agentId = v2Orchestrator.plan(text).tasks.firstOrNull()?.agentId
+        val history = _uiState.value.messages
+            .takeLast(12)
+            .filter { it.content.isNotBlank() }
+            .map { V2RuntimeHistoryMessage(role = it.role, content = it.content) }
+        _uiState.update {
+            it.copy(
+                messages = it.messages + userMsg,
+                isLoading = true,
+                error = null,
+                statusMessage = loadingTextForV2Agent(agentId),
+                pendingRouteConfirmation = null,
+                conversationId = convId,
+                v2Trace = null
+            )
+        }
+        chatRepository.saveMessage(convId, userMsg)
+
+        scope.launch {
+            val stageEvents = mutableListOf<V2StageEvent>()
+            var streamedAssistant = false
+            runCatching {
+                v2RuntimeOrchestrator.orchestrate(
+                    request = V2RuntimeRequest(text, imageBase64, history),
+                    onEvent = { event ->
+                        stageEvents += event
+                        _uiState.update { state ->
+                            state.copy(
+                                statusMessage = event.toLoadingText(agentId)
+                            )
+                        }
+                    },
+                    onContent = { agentId, chunk ->
+                        if (chunk.isNotBlank()) {
+                            streamedAssistant = true
+                            _uiState.update { state ->
+                                val messages = state.messages.toMutableList()
+                                val last = messages.lastOrNull()
+                                if (last?.role == Message.ROLE_ASSISTANT && last.agentName == agentId.wireName) {
+                                    messages[messages.lastIndex] = last.copy(content = last.content + chunk)
+                                } else {
+                                    messages.add(
+                                        Message(
+                                            role = Message.ROLE_ASSISTANT,
+                                            content = chunk,
+                                            agentName = agentId.wireName
+                                        )
+                                    )
+                                }
+                                state.copy(messages = messages, statusMessage = null)
+                            }
+                        }
+                    }
+                )
+            }
+                .onSuccess { trace ->
+                    val assistant = trace.toAssistantMessage()
+                    _uiState.update { state ->
+                        val messages = if (streamedAssistant) {
+                            state.messages.toMutableList().apply {
+                                val userIdx = indexOfLast { it.role == Message.ROLE_USER && it.content == userMsg.content }
+                                if (userIdx >= 0 && userIdx < lastIndex) {
+                                    subList(userIdx + 1, size).clear()
+                                }
+                                add(assistant)
+                            }
+                        } else {
+                            state.messages + assistant
+                        }
+                        state.copy(
+                            messages = messages,
+                            isLoading = false,
+                            statusMessage = null,
+                            v2Trace = trace,
+                            pendingSystemAction = trace.toV2SystemAction() ?: state.pendingSystemAction
+                        )
+                    }
+                    chatRepository.saveMessage(convId, assistant)
+                }
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            statusMessage = stageEvents.lastOrNull()?.toLoadingText(agentId),
+                            error = e.message ?: "V2 Agent 执行失败"
+                        )
+                    }
+                }
         }
     }
 
@@ -401,14 +487,56 @@ class ChatManager(
         }
         _uiState.update { state ->
             val msgs = state.messages.toMutableList()
-            val last = msgs.lastOrNull()
-            if (last?.role == Message.ROLE_ASSISTANT) {
-                msgs[msgs.lastIndex] = last.copy(content = last.content + chunk)
+            val idx = activeAssistantIndex(msgs)
+            if (idx >= 0) {
+                val current = msgs[idx]
+                msgs[idx] = current.copy(content = current.content + chunk)
             } else {
-                msgs.add(Message(role = Message.ROLE_ASSISTANT, content = chunk))
+                val assistant = Message(role = Message.ROLE_ASSISTANT, content = chunk)
+                activeAssistantTimestamp = assistant.timestamp
+                msgs.add(assistant)
             }
             state.copy(messages = msgs, statusMessage = null)
         }
+    }
+
+    private fun appendThinkingContent(chunk: String) {
+        if (chunk.isBlank()) return
+        _uiState.update { state ->
+            val msgs = state.messages.toMutableList()
+            val now = System.currentTimeMillis()
+            val idx = activeAssistantIndex(msgs)
+            if (idx >= 0) {
+                val current = msgs[idx]
+                msgs[idx] = current.copy(
+                    thinkingContent = current.thinkingContent + chunk,
+                    thinkingStartedAt = current.thinkingStartedAt ?: now,
+                    thinkingFinishedAt = null
+                )
+            } else {
+                val assistant = Message(
+                    role = Message.ROLE_ASSISTANT,
+                    content = "",
+                    thinkingContent = chunk,
+                    thinkingStartedAt = now
+                )
+                activeAssistantTimestamp = assistant.timestamp
+                msgs.add(assistant)
+            }
+            state.copy(messages = msgs, statusMessage = null)
+        }
+    }
+
+    private fun finishThinking(state: ChatUiState): ChatUiState {
+        val msgs = state.messages.toMutableList()
+        val idx = msgs.indexOfLast {
+            it.role == Message.ROLE_ASSISTANT &&
+                it.thinkingStartedAt != null &&
+                it.thinkingFinishedAt == null
+        }
+        if (idx < 0) return state
+        msgs[idx] = msgs[idx].copy(thinkingFinishedAt = System.currentTimeMillis())
+        return state.copy(messages = msgs)
     }
 
     private fun dispatchConversionAgent(text: String) {
@@ -465,41 +593,6 @@ class ChatManager(
                     scope.launch {
                         delay(120)
                         dispatchConversionAgentInternal(pending.originalInput)
-                    }
-                    return true
-                }
-                BuiltinAgents.RAG.name -> {
-                    sessionContextManager.activate(BuiltinAgents.RAG.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    _uiState.update { it.copy(currentMode = ChatMode.RAG, webSearchEnabled = false) }
-                    sendMessage(pending.originalInput)
-                    return true
-                }
-                BuiltinAgents.SEARCH.name -> {
-                    sessionContextManager.activate(BuiltinAgents.SEARCH.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    _uiState.update { it.copy(currentMode = ChatMode.CHAT, webSearchEnabled = true) }
-                    sendMessage(pending.originalInput)
-                    return true
-                }
-                BuiltinAgents.EMAIL.name -> {
-                    sessionContextManager.activate(BuiltinAgents.EMAIL.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    if (isEmailHistoryIntent(pending.originalInput)) {
-                        _uiState.update { it.copy(isLoading = true, statusMessage = "正在查询邮件历史…") }
-                        fetchEmailHistory()
-                        return true
-                    }
-                    val draft = extractEmailDraft(pending.originalInput)
-                    if (draft == null) {
-                        val aiMsg = Message(
-                            role = Message.ROLE_ASSISTANT,
-                            content = "请补充收件人邮箱后我再为你发送邮件。"
-                        )
-                        _uiState.update { it.copy(messages = it.messages + aiMsg) }
-                    } else {
-                        _uiState.update { it.copy(isLoading = true, statusMessage = "正在发送邮件…") }
-                        sendEmailByBackend(draft)
                     }
                     return true
                 }
@@ -568,13 +661,35 @@ class ChatManager(
     ): ChatUiState {
         if (sources.isEmpty()) return state
         val msgs = state.messages.toMutableList()
-        val idx = msgs.indexOfLast { it.role == Message.ROLE_ASSISTANT }
+        val idx = activeAssistantIndex(msgs)
         if (idx >= 0) {
-            msgs[idx] = msgs[idx].copy(sources = sources)
+            val current = msgs[idx]
+            msgs[idx] = current.copy(sources = mergeSources(current.sources, sources))
         } else {
-            msgs.add(Message(role = Message.ROLE_ASSISTANT, content = "", sources = sources))
+            val assistant = Message(role = Message.ROLE_ASSISTANT, content = "", sources = sources)
+            activeAssistantTimestamp = assistant.timestamp
+            msgs.add(assistant)
         }
         return state.copy(messages = msgs)
+    }
+
+    private fun mergeSources(existing: List<SourceDto>, incoming: List<SourceDto>): List<SourceDto> {
+        if (existing.isEmpty()) return incoming
+        if (incoming.isEmpty()) return existing
+        return (existing + incoming).distinctBy {
+            it.url?.trim()?.lowercase()?.ifBlank { null } ?: it.source.trim().lowercase()
+        }
+    }
+
+    private fun activeAssistantIndex(messages: List<Message>): Int {
+        val activeTimestamp = activeAssistantTimestamp
+        if (activeTimestamp != null) {
+            val idx = messages.indexOfLast {
+                it.role == Message.ROLE_ASSISTANT && it.timestamp == activeTimestamp
+            }
+            if (idx >= 0) return idx
+        }
+        return messages.indexOfLast { it.role == Message.ROLE_ASSISTANT }
     }
 
     fun setMode(mode: ChatMode) {
@@ -598,8 +713,30 @@ class ChatManager(
         _uiState.update { it.copy(ragSettingsExpanded = expanded) }
     }
 
+    fun refreshConversations() {
+        scope.launch {
+            chatRepository.listConversations().fold(
+                onSuccess = { conversations ->
+                    _uiState.update { it.copy(conversations = conversations, conversationError = null) }
+                },
+                onFailure = { e ->
+                    _uiState.update { it.copy(conversationError = e.message ?: "加载失败") }
+                }
+            )
+        }
+    }
+
+    fun renameConversation(conversationId: Int, title: String) {
+        chatRepository.updateConversationTitle(conversationId, title)
+        refreshConversations()
+    }
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun clearConversationError() {
+        _uiState.update { it.copy(conversationError = null) }
     }
 
     fun clearRetrievalHint() {
@@ -608,6 +745,10 @@ class ChatManager(
 
     fun consumePendingNavigation() {
         _uiState.update { it.copy(pendingAgentNavigation = null) }
+    }
+
+    fun consumePendingSystemAction() {
+        _uiState.update { it.copy(pendingSystemAction = null) }
     }
 
     private fun extractEmailDraft(input: String): EmailDraft? {
@@ -767,4 +908,67 @@ class ChatManager(
     private companion object {
         private const val STREAM_FRAME_DELAY_MILLIS = 16L
     }
+}
+
+internal fun RouteResult.shouldUseLocalDirectAgentBeforeV2(): Boolean =
+    disposition == RouteDisposition.DIRECT && agentName == UnitConversionAgent.META.name
+
+internal fun V2AgentId.shouldAnswerWithV2Runtime(input: String): Boolean = when (this) {
+    V2AgentId.SEARCH,
+    V2AgentId.RAG,
+    V2AgentId.RESEARCH,
+    V2AgentId.SCHEDULE,
+    V2AgentId.TASK,
+    V2AgentId.PDF,
+    V2AgentId.FILE -> true
+    V2AgentId.EMAIL -> !input.trim().lowercase().let { text ->
+        listOf("历史", "记录", "已发送", "发送过", "发过", "history").any { text.contains(it) }
+    }
+}
+
+private fun V2StageEvent.toLoadingText(agentId: V2AgentId?): String = when (agentId) {
+    V2AgentId.EMAIL -> "邮件发送中..."
+    V2AgentId.SEARCH -> "智能搜索中..."
+    V2AgentId.RAG -> "知识库检索中..."
+    else -> when (stage) {
+        V2PipelineStage.MASTER,
+        V2PipelineStage.PLANNER,
+        V2PipelineStage.ROUTER -> "正在分析请求..."
+        V2PipelineStage.AGENTS -> "正在执行任务..."
+        V2PipelineStage.REFLECTION,
+        V2PipelineStage.JUDGE,
+        V2PipelineStage.AGGREGATOR -> "正在整理结果..."
+    }
+}
+
+private fun loadingTextForV2Agent(agentId: V2AgentId?): String = when (agentId) {
+    V2AgentId.EMAIL -> "邮件发送中..."
+    V2AgentId.SEARCH -> "智能搜索中..."
+    V2AgentId.RAG -> "知识库检索中..."
+    else -> "正在处理..."
+}
+
+private fun V2OrchestrationResult.toAssistantMessage(): Message {
+    val content = runs.joinToString("\n\n") { run ->
+        val prefix = when (run.status) {
+            V2AgentRunStatus.COMPLETED -> ""
+            V2AgentRunStatus.NEEDS_INPUT -> "需要补充信息："
+            V2AgentRunStatus.BLOCKED -> "执行失败："
+        }
+        buildString {
+            append(prefix)
+            append(run.output.ifBlank { run.summary })
+            if (run.followUps.isNotEmpty()) {
+                append("\n\n")
+                append(run.followUps.joinToString("\n") { "- $it" })
+            }
+        }
+    }.ifBlank { answer }
+
+    return Message(
+        role = Message.ROLE_ASSISTANT,
+        content = content,
+        agentName = runs.firstOrNull()?.agentId?.wireName,
+        agentResultJson = Gson().toJson(this)
+    )
 }

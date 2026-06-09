@@ -1,21 +1,32 @@
 package com.geoagent.ui.chat
 
+import android.Manifest
+import android.graphics.Color
 import android.content.Intent
 import android.graphics.PorterDuff
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
+import android.provider.CalendarContract
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.util.Base64
+import android.view.LayoutInflater
 import android.view.View
+import android.view.Window
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
@@ -24,27 +35,25 @@ import androidx.recyclerview.widget.RecyclerView
 import com.geoagent.R
 import com.geoagent.domain.model.ChatMode
 import com.geoagent.domain.model.Message
-import com.geoagent.domain.repository.AuthRepository
-import com.geoagent.domain.repository.ChatRepository
 import com.geoagent.ui.TransitionHelper
 import com.geoagent.ui.documents.DocumentListActivity
 import com.geoagent.ui.motion.MotionTokens
 import com.geoagent.ui.motion.MotionUtils
 import com.geoagent.ui.settings.SettingsActivity
+import com.geoagent.ui.viewmodel.ChatViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.slider.Slider
+import dagger.hilt.android.AndroidEntryPoint
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
 
+@AndroidEntryPoint
 class ChatActivity : AppCompatActivity() {
 
-    private val chatRepository: ChatRepository by inject()
-    private val authRepository: AuthRepository by inject()
+    private val chatManager: ChatViewModel by viewModels()
 
-    private lateinit var chatManager: ChatManager
     private lateinit var messageAdapter: ChatMessageAdapter
     private lateinit var conversationAdapter: ConversationAdapter
     private lateinit var markwon: Markwon
@@ -58,6 +67,19 @@ class ChatActivity : AppCompatActivity() {
     private var lastHasMessages: Boolean? = null
     private var lastRagSettingsVisible = false
     private var lastModeChipIsRag: Boolean? = null
+    private var shouldAutoScrollMessages = true
+    private var userPausedAutoScroll = false
+    private var messagesScrollState = RecyclerView.SCROLL_STATE_IDLE
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Toast.makeText(
+            this,
+            if (granted) "提醒通知已开启" else "提醒已创建，但通知权限未开启",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 
     private val imagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri ?: return@registerForActivityResult
@@ -78,7 +100,6 @@ class ChatActivity : AppCompatActivity() {
         setContentView(R.layout.activity_chat)
 
         markwon = Markwon.create(this)
-        chatManager = ChatManager(lifecycleScope, chatRepository, authRepository)
 
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         val rvMessages = findViewById<RecyclerView>(R.id.rv_messages)
@@ -93,6 +114,7 @@ class ChatActivity : AppCompatActivity() {
         val btnModeChat = findViewById<TextView>(R.id.btn_mode_chat)
         val btnModeRag = findViewById<TextView>(R.id.btn_mode_rag)
         val chipWebSearch = findViewById<TextView>(R.id.chip_web_search)
+        val chipDeepThinking = findViewById<TextView?>(R.id.chip_deep_thinking)
         val chipRagSettings = findViewById<TextView>(R.id.chip_rag_settings)
         val btnAddImage = findViewById<ImageView>(R.id.btn_add_image)
         val cardRagSettings = findViewById<MaterialCardView>(R.id.card_rag_settings)
@@ -109,7 +131,7 @@ class ChatActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.btn_menu).setOnClickListener {
             MotionUtils.press(it)
             drawerLayout.openDrawer(GravityCompat.START)
-            refreshConversations()
+            chatManager.refreshConversations()
         }
         findViewById<ImageView>(R.id.btn_new_chat).setOnClickListener {
             MotionUtils.press(it)
@@ -120,6 +142,27 @@ class ChatActivity : AppCompatActivity() {
         rvMessages.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = false }
         rvMessages.itemAnimator = null
         rvMessages.adapter = messageAdapter
+        rvMessages.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                messagesScrollState = newState
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    userPausedAutoScroll = true
+                    shouldAutoScrollMessages = false
+                } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (recyclerView.isNearBottom()) {
+                        userPausedAutoScroll = false
+                        shouldAutoScrollMessages = true
+                    }
+                }
+            }
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (recyclerView.isNearBottom()) {
+                    if (userPausedAutoScroll) userPausedAutoScroll = false
+                    shouldAutoScrollMessages = true
+                }
+            }
+        })
 
         conversationAdapter = ConversationAdapter(
             onClick = { conversation ->
@@ -152,6 +195,10 @@ class ChatActivity : AppCompatActivity() {
             MotionUtils.press(it)
             chatManager.setWebSearchEnabled(!chatManager.uiState.value.webSearchEnabled)
         }
+        chipDeepThinking?.setOnClickListener {
+            MotionUtils.press(it)
+            chatManager.setDeepThinkingEnabled(!chatManager.uiState.value.deepThinkingEnabled)
+        }
         btnAddImage.setOnClickListener {
             MotionUtils.press(it)
             imagePicker.launch("image/*")
@@ -183,6 +230,8 @@ class ChatActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             MotionUtils.press(btnSend)
+            userPausedAutoScroll = false
+            shouldAutoScrollMessages = true
             chatManager.sendMessage(text.ifEmpty { "请分析这张图片" }, pendingImageBase64)
             etMessage.text?.clear()
             pendingImageBase64 = null
@@ -202,19 +251,27 @@ class ChatActivity : AppCompatActivity() {
             TransitionHelper.forward(this)
         }
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finish()
+                TransitionHelper.backward(this@ChatActivity)
+            }
+        })
+
         updateSendButtonState()
 
         lifecycleScope.launch {
             chatManager.uiState.collectLatest { state ->
                 val loadingText = state.loadingDisplayText()
                 messageAdapter.submit(state.messages, markwon, loadingText)
+                conversationAdapter.submit(state.conversations)
                 val hasMessages = state.messages.isNotEmpty()
                 updateEmptyState(emptyLayout, emptyLogo, hasMessages)
                 updateMessagesVisibility(rvMessages, hasMessages)
-                if (hasMessages) {
+                if (hasMessages && shouldAutoScrollMessages && !userPausedAutoScroll) {
                     rvMessages.post {
-                        if (messageAdapter.itemCount > 0) {
-                            rvMessages.scrollToPosition(messageAdapter.itemCount - 1)
+                        if (shouldAutoScrollMessages && !userPausedAutoScroll && messageAdapter.itemCount > 0) {
+                            followStreamingIfAllowed(rvMessages)
                         }
                     }
                 }
@@ -228,6 +285,10 @@ class ChatActivity : AppCompatActivity() {
                 state.retrievalHint?.let {
                     Toast.makeText(this@ChatActivity, it, Toast.LENGTH_LONG).show()
                     chatManager.clearRetrievalHint()
+                }
+                state.conversationError?.let {
+                    Toast.makeText(this@ChatActivity, it, Toast.LENGTH_SHORT).show()
+                    chatManager.clearConversationError()
                 }
 
                 when (state.pendingAgentNavigation) {
@@ -244,8 +305,14 @@ class ChatActivity : AppCompatActivity() {
                     null -> Unit
                 }
 
+                state.pendingSystemAction?.let { action ->
+                    handleV2SystemAction(action)
+                    chatManager.consumePendingSystemAction()
+                }
+
                 updateModeUi(state.currentMode, chipWebSearch, chipRagSettings, tvEmptyTitle, tvModeHint, hasMessages)
                 updateSearchChip(chipWebSearch, state.webSearchEnabled)
+                if (chipDeepThinking != null) updateDeepThinkingChip(chipDeepThinking!!, state.deepThinkingEnabled)
                 updateRagSettingsVisibility(
                     cardRagSettings,
                     state.ragSettingsExpanded && state.currentMode == ChatMode.RAG
@@ -309,6 +376,14 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun followStreamingIfAllowed(rvMessages: RecyclerView) {
+        if (messageAdapter.itemCount == 0) return
+        if (messagesScrollState == RecyclerView.SCROLL_STATE_DRAGGING || userPausedAutoScroll) return
+        val distance = rvMessages.distanceToBottom()
+        if (distance <= 0) return
+        rvMessages.scrollBy(0, distance)
+    }
+
     private fun updateRagSettingsVisibility(card: View, visible: Boolean) {
         if (lastRagSettingsVisible == visible && card.visibility == if (visible) View.VISIBLE else View.GONE) return
         lastRagSettingsVisible = visible
@@ -319,16 +394,31 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun RecyclerView.isNearBottom(): Boolean {
+        return distanceToBottom() <= NEAR_BOTTOM_THRESHOLD_PX
+    }
+
+    private fun RecyclerView.distanceToBottom(): Int =
+        (computeVerticalScrollRange() - computeVerticalScrollOffset() - computeVerticalScrollExtent()).coerceAtLeast(0)
+
     private fun ChatUiState.loadingDisplayText(): String? {
         if (!isLoading) return null
+        val activeThinking = messages.lastOrNull()?.let {
+            it.role == Message.ROLE_ASSISTANT && it.thinkingStartedAt != null && it.thinkingFinishedAt == null
+        } == true
+        if (activeThinking) return null
         val answerStarted = messages.lastOrNull()?.let {
             it.role == Message.ROLE_ASSISTANT && it.content.isNotBlank()
         } == true
+        val thinkingStarted = messages.lastOrNull()?.let {
+            it.role == Message.ROLE_ASSISTANT && it.thinkingContent.isNotBlank()
+        } == true
+        if (thinkingStarted) return null
         if (answerStarted) return null
+        if (!statusMessage.isNullOrBlank()) return statusMessage
         return when {
             currentMode == ChatMode.CHAT && webSearchEnabled -> "智能搜索中…"
             currentMode == ChatMode.RAG -> statusMessage ?: "正在检索知识库…"
-            !statusMessage.isNullOrBlank() -> statusMessage
             else -> "正在生成回答…"
         }
     }
@@ -339,9 +429,9 @@ class ChatActivity : AppCompatActivity() {
         btnSend.setImageResource(R.drawable.ic_send_arrow)
         btnSend.contentDescription = getString(R.string.send)
         val tintColor = if (hasContent) {
-            android.graphics.Color.parseColor("#1E88E5")
+            ContextCompat.getColor(this, R.color.primary)
         } else {
-            android.graphics.Color.parseColor("#BDBDBD")
+            ContextCompat.getColor(this, R.color.hint_text)
         }
         btnSend.setColorFilter(
             tintColor,
@@ -350,50 +440,100 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun updateSearchChip(chip: TextView, enabled: Boolean) {
+        val enabledColor = ContextCompat.getColor(this, R.color.primary)
+        val disabledColor = ContextCompat.getColor(this, R.color.chip_text)
         if (enabled) {
             chip.setBackgroundResource(R.drawable.bg_chip_active_blue)
-            chip.setTextColor(android.graphics.Color.parseColor("#1E88E5"))
+            chip.setTextColor(enabledColor)
         } else {
             chip.setBackgroundResource(R.drawable.bg_chip_outline_gray)
-            chip.setTextColor(android.graphics.Color.parseColor("#757575"))
+            chip.setTextColor(disabledColor)
         }
         chip.compoundDrawablesRelative.forEach { drawable ->
-            drawable?.mutate()?.setTint(
-                android.graphics.Color.parseColor(if (enabled) "#1E88E5" else "#757575")
-            )
+            drawable?.mutate()?.setTint(if (enabled) enabledColor else disabledColor)
         }
     }
 
-    private fun refreshConversations() {
-        lifecycleScope.launch {
-            chatRepository.listConversations().fold(
-                onSuccess = { conversationAdapter.submit(it) },
-                onFailure = { Toast.makeText(this@ChatActivity, it.message ?: "加载失败", Toast.LENGTH_SHORT).show() }
-            )
+    private fun updateDeepThinkingChip(chip: TextView, enabled: Boolean) {
+        val enabledColor = ContextCompat.getColor(this, R.color.primary)
+        val disabledColor = ContextCompat.getColor(this, R.color.chip_text)
+        if (enabled) {
+            chip.setBackgroundResource(R.drawable.bg_chip_active_blue)
+            chip.setTextColor(enabledColor)
+        } else {
+            chip.setBackgroundResource(R.drawable.bg_chip_outline_gray)
+            chip.setTextColor(disabledColor)
+        }
+        chip.compoundDrawablesRelative.forEach { drawable ->
+            drawable?.mutate()?.setTint(if (enabled) enabledColor else disabledColor)
         }
     }
 
     private fun showRenameConversationDialog(conversationId: Int, currentTitle: String) {
-        val input = EditText(this).apply {
+        val content = LayoutInflater.from(this).inflate(R.layout.dialog_rename_conversation, null)
+        val input = content.findViewById<EditText>(R.id.et_conversation_title).apply {
             setText(currentTitle)
             setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             selectAll()
         }
-        AlertDialog.Builder(this)
-            .setTitle("修改对话名称")
-            .setView(input)
-            .setNegativeButton("取消", null)
-            .setPositiveButton("保存") { _, _ ->
-                val title = input.text?.toString()?.trim().orEmpty()
-                if (title.isBlank()) {
-                    Toast.makeText(this, "名称不能为空", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-                chatRepository.updateConversationTitle(conversationId, title)
-                refreshConversations()
+        val dialog = AlertDialog.Builder(this)
+            .setView(content)
+            .create()
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        content.findViewById<TextView>(R.id.btn_cancel).setOnClickListener {
+            dialog.dismiss()
+        }
+        content.findViewById<TextView>(R.id.btn_save).setOnClickListener {
+            val title = input.text?.toString()?.trim().orEmpty()
+            if (title.isBlank()) {
+                Toast.makeText(this, "名称不能为空", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
-            .show()
+            chatManager.renameConversation(conversationId, title)
+            dialog.dismiss()
+        }
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            dialog.window?.setDimAmount(0.38f)
+            input.requestFocus()
+        }
+        dialog.show()
+    }
+
+    private fun handleV2SystemAction(action: V2SystemAction) {
+        when (action) {
+            is V2SystemAction.OpenCalendarInsert -> openCalendarInsert(action)
+            is V2SystemAction.ConfirmReminder -> confirmReminder(action)
+        }
+    }
+
+    private fun openCalendarInsert(action: V2SystemAction.OpenCalendarInsert) {
+        val intent = Intent(Intent.ACTION_INSERT)
+            .setData(CalendarContract.Events.CONTENT_URI)
+            .putExtra(CalendarContract.Events.TITLE, action.title)
+            .putExtra(CalendarContract.Events.DESCRIPTION, action.description)
+            .putExtra(CalendarContract.Events.EVENT_TIMEZONE, action.timeZone)
+            .apply {
+                action.beginTimeMillis?.let { putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, it) }
+                action.endTimeMillis?.let { putExtra(CalendarContract.EXTRA_EVENT_END_TIME, it) }
+            }
+        runCatching {
+            startActivity(intent)
+        }.onFailure {
+            Toast.makeText(this, "未找到可用日历应用", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun confirmReminder(action: V2SystemAction.ConfirmReminder) {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            Toast.makeText(this, "提醒已创建：${action.title}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateModeUi(
@@ -480,17 +620,8 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        TransitionHelper.backward(this)
-    }
-
-    override fun onDestroy() {
-        chatManager.destroy()
-        super.onDestroy()
-    }
-
     companion object {
         const val EXTRA_CONVERSATION_ID = "conversation_id"
+        private const val NEAR_BOTTOM_THRESHOLD_PX = 220
     }
 }
