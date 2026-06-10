@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="4dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="4dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="0dp">
+
+        <com.geoagent.ui.chat.WaveBarsLoadingView
+            android:id="@+id/wave_loading"
+            android:layout_width="28dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="6dp"
+            app:animationDuration="800"
+            app:barColorEnd="@color/geoagent_red_air"
+            app:barColorStart="@color/geoagent_blue_air"
+            app:barCornerRadius="4dp"
+            app:barCount="4"
+            app:flowDuration="2000"
+            app:highlightColor="@color/geoagent_yellow_air" />
+
+        <com.geoagent.ui.chat.ShimmerTextView
+            android:id="@+id/tv_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="智能搜索中…"
+            android:textColor="@color/geoagent_blue"
+            android:textSize="13sp" />
+    </LinearLayout>
+</LinearLayout>

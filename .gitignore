@@ -1,0 +1,15 @@
+*.iml
+.gradle
+.kotlin/
+/local.properties
+/.idea/
+.claude/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Environment config (contains API keys)
+.env

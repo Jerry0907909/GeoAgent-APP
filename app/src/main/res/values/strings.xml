@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GeoAgent</string>
+
+    <!-- Auth -->
+    <string name="login">登录</string>
+    <string name="register">注册</string>
+    <string name="email">邮箱</string>
+    <string name="password">密码</string>
+    <string name="confirm_password">确认密码</string>
+    <string name="verification_code">验证码</string>
+    <string name="send_verification_code">发送验证码</string>
+    <string name="forgot_password">忘记密码?</string>
+    <string name="no_account_register">没有账号？立即注册</string>
+    <string name="has_account_login">已有账号？去登录</string>
+    <string name="username">用户名</string>
+    <string name="username_or_email">用户名或邮箱</string>
+    <string name="login_subtitle">地质文献智能问答平台</string>
+    <string name="login_mode_password">密码登录</string>
+    <string name="login_mode_email_code">验证码登录</string>
+    <string name="switch_account">切换账号</string>
+    <string name="account_security">账号与安全</string>
+    <string name="appearance">外观</string>
+    <string name="section_account">账户</string>
+    <string name="section_app">应用</string>
+    <string name="section_about">关于</string>
+
+    <!-- Navigation -->
+    <string name="nav_chat">对话</string>
+    <string name="nav_documents">知识库</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- Chat -->
+    <string name="new_conversation">新对话</string>
+    <string name="input_question">输入问题...</string>
+    <string name="send">发送</string>
+    <string name="chat_mode">对话</string>
+    <string name="rag_mode">RAG</string>
+    <string name="mode_chat">快速模式</string>
+    <string name="mode_rag">知识库模式</string>
+    <string name="mode_hint_chat">适合日常对话，即时响应</string>
+    <string name="mode_hint_rag">基于知识库文档，精准回答</string>
+    <string name="composer_hint">发消息或按住说话</string>
+    <string name="drawer_open">打开菜单</string>
+    <string name="new_chat">新对话</string>
+    <string name="deep_thinking">思考模式</string>
+    <string name="smart_search">智能搜索</string>
+    <string name="add_image">添加图片</string>
+    <string name="copy">复制</string>
+    <string name="regenerate">重新生成</string>
+    <string name="empty_chat_hint_chat">使用快速模式开始对话</string>
+    <string name="empty_chat_hint_rag">使用知识库模式开始对话</string>
+
+    <!-- Documents -->
+    <string name="upload_document">上传文档</string>
+    <string name="delete">删除</string>
+    <string name="support_formats">支持 PDF, Word, TXT</string>
+    <string name="click_upload">点击上传文档</string>
+    <string name="upload_count">上传 %d 个文件</string>
+    <string name="knowledge_base">知识库</string>
+
+    <!-- Settings -->
+    <string name="settings">设置</string>
+    <string name="theme">主题</string>
+    <string name="language">语言</string>
+    <string name="version">版本</string>
+    <string name="profile">个人资料</string>
+    <string name="full_name">姓名</string>
+    <string name="avatar">头像</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="change_password">修改密码</string>
+    <string name="logout">退出登录</string>
+    <string name="about">关于</string>
+    <string name="preferences">偏好</string>
+    <string name="account">账户</string>
+
+    <!-- Search -->
+    <string name="deep_search_hint">使用深度搜索获取精准答案</string>
+    <string name="search_planning">搜索计划</string>
+    <string name="searching">正在搜索...</string>
+    <string name="extracting">提取关键信息...</string>
+
+    <!-- General -->
+    <string name="error_network">网络错误，请稍后重试</string>
+    <string name="error_auth">认证失败，请重新登录</string>
+    <string name="loading">加载中...</string>
+    <string name="done">完成</string>
+    <string name="source">来源</string>
+    <string name="citation">引用</string>
+    <string name="delete_confirm">确认删除?</string>
+    <string name="ok">确定</string>
+    <string name="current_password">当前密码</string>
+    <string name="new_password">新密码</string>
+    <string name="confirm_new_password">确认新密码</string>
+
+    <!-- Settings sections -->
+    <string name="section_privacy">隐私与数据</string>
+    <string name="section_personalization">个性化</string>
+    <string name="section_notifications">通知与偏好</string>
+    <string name="section_usage">使用与限制</string>
+    <string name="section_advanced">高级</string>
+
+    <!-- Privacy -->
+    <string name="privacy_data_improve">允许使用对话改进模型</string>
+    <string name="privacy_data_improve_desc">匿名化的对话数据将用于模型训练和改进</string>
+    <string name="privacy_export_data">导出数据</string>
+    <string name="privacy_delete_data">删除所有数据</string>
+    <string name="privacy_incognito">隐身模式</string>
+    <string name="privacy_incognito_desc">新对话将在关闭后自动删除</string>
+    <string name="privacy_memory_manage">记忆管理</string>
+    <string name="privacy_activity_audit">活动历史审核</string>
+
+    <!-- Personalization -->
+    <string name="pers_custom_instruction">自定义指令</string>
+    <string name="pers_memory_toggle">长期记忆</string>
+    <string name="pers_memory_desc">记住用户偏好和历史上下文</string>
+    <string name="pers_ai_profile">AI 个人档案</string>
+
+    <!-- Notifications -->
+    <string name="notif_push">推送通知</string>
+    <string name="notif_email_alerts">邮件提醒</string>
+    <string name="notif_usage_alert">用量提醒</string>
+
+    <!-- Usage -->
+    <string name="usage_stats">用量统计</string>
+    <string name="usage_chat_history">聊天历史管理</string>
+
+    <!-- Advanced -->
+    <string name="advanced_api_keys">API 密钥管理</string>
+    <string name="advanced_beta">Beta 功能</string>
+    <string name="advanced_debug">调试日志</string>
+
+    <!-- About -->
+    <string name="about_help">帮助中心</string>
+    <string name="about_feedback">反馈与建议</string>
+    <string name="about_terms">服务条款</string>
+    <string name="about_privacy_policy">隐私政策</string>
+    <string name="about_license">开源许可</string>
+    <string name="about_check_update">检查更新</string>
+</resources>
