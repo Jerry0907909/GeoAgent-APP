@@ -3,7 +3,6 @@ package com.geoagent.ui.chat
 import com.geoagent.agent.v2.V2AgentId
 import com.geoagent.agent.RouteDisposition
 import com.geoagent.agent.RouteResult
-import com.geoagent.agent.UnitConversionAgent
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,15 +28,15 @@ class V2RuntimeRoutingTest {
     }
 
     @Test
-    fun unitConversionDirectRouteRunsBeforeV2Fallback() {
+    fun removedUnitConversionRouteNoLongerBypassesV2() {
         val route = RouteResult(
-            agentName = UnitConversionAgent.META.name,
+            agentName = "unit_conversion",
             confidence = 0.9f,
             disposition = RouteDisposition.DIRECT,
             reason = "unit"
         )
 
-        assertTrue(route.shouldUseLocalDirectAgentBeforeV2())
+        assertFalse(route.shouldUseLocalDirectAgentBeforeV2())
     }
 
     @Test

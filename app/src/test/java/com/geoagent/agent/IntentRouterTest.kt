@@ -2,28 +2,25 @@ package com.geoagent.agent
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class IntentRouterTest {
     private val router = IntentRouter(BuiltinAgents.ALL)
 
     @Test
-    fun directRoute_whenHighConfidenceNaturalLanguage() {
+    fun fallback_whenUnitConversionQuery() {
         val result = router.route("3000米等于多少英尺")
 
-        assertEquals(RouteDisposition.DIRECT, result.disposition)
-        assertEquals(UnitConversionAgent.META.name, result.agentName)
-        assertTrue(result.confidence >= 0.8f)
+        assertEquals(RouteDisposition.FALLBACK, result.disposition)
+        assertNull(result.agentName)
     }
 
     @Test
-    fun directRoute_whenMediumConfidenceNaturalLanguage() {
+    fun fallback_whenMediumConfidenceUnitConversionQuery() {
         val result = router.route("帮我转换一下")
 
-        assertEquals(RouteDisposition.DIRECT, result.disposition)
-        assertEquals(UnitConversionAgent.META.name, result.agentName)
-        assertTrue(result.confidence in 0.6f..0.8f)
+        assertEquals(RouteDisposition.FALLBACK, result.disposition)
+        assertNull(result.agentName)
     }
 
     @Test
@@ -35,10 +32,10 @@ class IntentRouterTest {
     }
 
     @Test
-    fun inheritContext_whenWithinTtl() {
+    fun doesNotInheritRemovedUnitConversionContext() {
         val now = 100_000L
         val context = SessionContext(
-            activeAgent = UnitConversionAgent.META.name,
+            activeAgent = "unit_conversion",
             activatedAtMillis = now - 60_000L
         )
 
@@ -48,16 +45,15 @@ class IntentRouterTest {
             nowMillis = now
         )
 
-        assertEquals(RouteDisposition.DIRECT, result.disposition)
-        assertEquals(UnitConversionAgent.META.name, result.agentName)
-        assertTrue(result.reason.startsWith("context_inherit"))
+        assertEquals(RouteDisposition.FALLBACK, result.disposition)
+        assertNull(result.agentName)
     }
 
     @Test
-    fun clearContext_whenExitKeywordReceived() {
+    fun unknownRemovedAgentContextDoesNotTriggerExitHandling() {
         val now = 100_000L
         val context = SessionContext(
-            activeAgent = UnitConversionAgent.META.name,
+            activeAgent = "unit_conversion",
             activatedAtMillis = now - 30_000L
         )
 
@@ -68,21 +64,21 @@ class IntentRouterTest {
         )
 
         assertEquals(RouteDisposition.FALLBACK, result.disposition)
-        assertTrue(result.shouldClearContext)
+        assertNull(result.agentName)
     }
 
     @Test
-    fun routeToRag_whenDocumentKnowledgeQuery() {
+    fun fallback_whenDocumentKnowledgeQuery() {
         val result = router.route("根据文献资料回答这个问题")
-        assertEquals("v2_rag", result.agentName)
-        assertEquals(RouteDisposition.DIRECT, result.disposition)
+        assertEquals(RouteDisposition.FALLBACK, result.disposition)
+        assertNull(result.agentName)
     }
 
     @Test
-    fun routeToSearch_whenWebSearchQuery() {
+    fun fallback_whenWebSearchQuery() {
         val result = router.route("帮我联网搜索今天的地质新闻")
-        assertEquals("v2_search", result.agentName)
-        assertEquals(RouteDisposition.DIRECT, result.disposition)
+        assertEquals(RouteDisposition.FALLBACK, result.disposition)
+        assertNull(result.agentName)
     }
 
     @Test
@@ -103,6 +99,6 @@ class IntentRouterTest {
     fun routeToEmail_whenHistoryQuery() {
         val result = router.route("查看邮件发送历史")
         assertEquals("v2_email", result.agentName)
-        assertTrue(result.disposition == RouteDisposition.DIRECT || result.disposition == RouteDisposition.CONFIRM)
+        assertEquals(RouteDisposition.DIRECT, result.disposition)
     }
 }

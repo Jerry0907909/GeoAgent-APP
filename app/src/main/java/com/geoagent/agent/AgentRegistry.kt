@@ -25,20 +25,6 @@ data class SessionContext(
     }
 }
 
-class SessionContextManager(initial: SessionContext = SessionContext()) {
-    private var context: SessionContext = initial
-
-    fun snapshot(): SessionContext = context
-
-    fun activate(agentName: String, nowMillis: Long) {
-        context = SessionContext(activeAgent = agentName, activatedAtMillis = nowMillis)
-    }
-
-    fun clear() {
-        context = SessionContext()
-    }
-}
-
 enum class RouteDisposition {
     DIRECT,
     CONFIRM,
@@ -238,21 +224,20 @@ object BuiltinAgents {
         ttlMinutes = 3
     )
 
-    /** V2 agents bridged into V1 AgentMeta format. */
-    val V2_BRIDGED_AGENTS: List<AgentMeta> = listOf(
-        AgentMeta("v2_search", "联网搜索", "Tavily-backed web search and synthesis", setOf("搜索", "联网", "tavily", "最新", "新闻"), listOf(Regex("""(联网|搜索|查一下|最新|新闻)""")), setOf("search", "tavily"), 10, true, 3),
-        AgentMeta("v2_rag", "知识库检索", "Local knowledge-base retrieval answering", setOf("知识库", "文档", "文献", "资料"), listOf(Regex("""(知识库|文档|文献|资料).*(检索|回答|查询)?""")), setOf("rag", "检索"), 11, true, 5),
-        AgentMeta("v2_research", "研究分析", "Research planning, evidence gathering, and source synthesis", setOf("研究", "调研", "综述", "论文研究", "资料整理", "分析"), listOf(Regex("""(研究|调研|综述|资料整理|分析)""")), setOf("研究", "调研"), 12, true, 5),
-        AgentMeta("v2_schedule", "日程安排", "Schedule planning and time-block arrangement", setOf("安排", "排期", "时间表", "计划表"), listOf(Regex("""(安排|排期|时间表|schedule)""", RegexOption.IGNORE_CASE)), setOf("安排"), 31, true, 3),
-        AgentMeta("v2_task", "任务管理", "Task capture, tracking, and decomposition", setOf("任务", "待办", "todo", "事项", "清单"), listOf(Regex("""(任务|待办|todo|清单)""", RegexOption.IGNORE_CASE)), setOf("任务", "待办"), 32, true, 3),
-        AgentMeta("v2_email", "邮件助手", "QQ SMTP email sending and mail drafting", setOf("邮件", "邮箱", "email", "smtp", "发信", "发送给", "发给"), listOf(Regex("""(发|发送).*(邮件|email|邮箱)|(?:发给|发送给|发送至|发至|给)\s*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+""", RegexOption.IGNORE_CASE)), setOf("邮件", "email", "发送给", "发给"), 8, false, 3),
-        AgentMeta("v2_pdf", "PDF解析", "PDF parsing, summarization, and extraction", setOf("pdf", "PDF", "提取pdf", "解析pdf"), listOf(Regex("""pdf|解析.*文件|提取.*文件""", RegexOption.IGNORE_CASE)), setOf("pdf"), 19, true, 3),
-        AgentMeta("v2_file", "文件管理", "File intake, parsing, and local document operations", setOf("文件", "上传", "打开文件", "保存", "导入"), listOf(Regex("""(文件|上传|导入|保存)"""), Regex("""(读取|查看|打开|删除|移除).*\.[a-zA-Z0-9]{2,5}""", RegexOption.IGNORE_CASE)), setOf("文件"), 42, true, 3)
+    val EMAIL = AgentMeta(
+        "v2_email",
+        "邮件助手",
+        "QQ SMTP email sending and mail drafting",
+        setOf("邮件", "邮箱", "email", "smtp", "发信", "发送给", "发给"),
+        listOf(Regex("""(发|发送).*(邮件|email|邮箱)|(?:发给|发送给|发送至|发至|给)\s*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+""", RegexOption.IGNORE_CASE)),
+        setOf("邮件", "email", "发送给", "发给"),
+        8,
+        false,
+        3
     )
 
-    val ALL: List<AgentMeta> = listOf(
-        UnitConversionAgent.META,
-        DOCUMENT,
-        SETTINGS
-    ) + V2_BRIDGED_AGENTS
+    /** Only Email Agent remains available for user-intent chat routing. */
+    val V2_BRIDGED_AGENTS: List<AgentMeta> = listOf(EMAIL)
+
+    val ALL: List<AgentMeta> = V2_BRIDGED_AGENTS
 }

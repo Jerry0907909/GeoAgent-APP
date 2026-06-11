@@ -6,8 +6,7 @@ import com.geoagent.agent.BuiltinAgents
 import com.geoagent.agent.IntentRouter
 import com.geoagent.agent.RouteDisposition
 import com.geoagent.agent.RouteResult
-import com.geoagent.agent.SessionContextManager
-import com.geoagent.agent.UnitConversionAgent
+
 import com.geoagent.agent.v2.V2OrchestrationResult
 import com.geoagent.agent.v2.V2Orchestrator
 import com.geoagent.agent.v2.V2PipelineStage
@@ -97,12 +96,10 @@ class ChatManager(
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     private val gson = Gson()
-    private val conversionAgent = UnitConversionAgent()
 
     private val intentRouter = IntentRouter(
         BuiltinAgents.ALL
     )
-    private val sessionContextManager = SessionContextManager()
 
     private var sseJob: Job? = null
     private var streamRenderJob: Job? = null
@@ -183,27 +180,14 @@ class ChatManager(
         val useExplicitWebSearch = _uiState.value.currentMode == ChatMode.CHAT && _uiState.value.webSearchEnabled
         val route = intentRouter.route(
             input = text,
-            sessionContext = sessionContextManager.snapshot(),
             isAuthenticated = true
         )
         val explicitEmailRoute = route.agentName == "v2_email" && route.disposition == RouteDisposition.DIRECT
-
-        if (route.shouldClearContext) {
-            sessionContextManager.clear()
-            syncActiveAgent()
-        }
 
         val directRoutedAgent = if (
             route.disposition == RouteDisposition.DIRECT &&
             !(useExplicitWebSearch && route.agentName?.startsWith("v2_") == true)
         ) route.agentName else null
-
-        if (route.shouldUseLocalDirectAgentBeforeV2()) {
-            sessionContextManager.activate(UnitConversionAgent.META.name, System.currentTimeMillis())
-            syncActiveAgent()
-            dispatchConversionAgent(text)
-            return
-        }
 
         val currentMode = _uiState.value.currentMode
         val v2Plan = v2Orchestrator.plan(text)
@@ -219,8 +203,6 @@ class ChatManager(
         if (directRoutedAgent != null) {
             when (directRoutedAgent) {
                 BuiltinAgents.DOCUMENT.name -> {
-                    sessionContextManager.activate(BuiltinAgents.DOCUMENT.name, System.currentTimeMillis())
-                    syncActiveAgent()
                     val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
                     _uiState.update {
                         it.copy(
@@ -248,8 +230,6 @@ class ChatManager(
                     return
                 }
                 BuiltinAgents.SETTINGS.name -> {
-                    sessionContextManager.activate(BuiltinAgents.SETTINGS.name, System.currentTimeMillis())
-                    syncActiveAgent()
                     val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
                     _uiState.update {
                         it.copy(
@@ -280,7 +260,6 @@ class ChatManager(
         }
 
         if (directRoutedAgent == null) {
-            sessionContextManager.clear()
             syncActiveAgent()
         }
         val mode = _uiState.value.currentMode
@@ -659,44 +638,6 @@ class ChatManager(
         return state.copy(messages = msgs)
     }
 
-    private fun dispatchConversionAgent(text: String) {
-        val userMsg = Message(role = Message.ROLE_USER, content = text)
-        _uiState.update {
-            it.copy(
-                messages = it.messages + userMsg,
-                isLoading = true,
-                statusMessage = "正在换算单位…"
-            )
-        }
-        scope.launch {
-            delay(120)
-            dispatchConversionAgentInternal(text)
-        }
-    }
-
-    private fun dispatchConversionAgentInternal(text: String) {
-        val result = conversionAgent.parse(text)
-
-        if (result != null) {
-            val converted = conversionAgent.convert(result)
-            val resultJson = gson.toJson(converted)
-            val aiMsg = Message(
-                role = Message.ROLE_ASSISTANT,
-                content = converted.output,
-                agentName = UnitConversionAgent.META.name,
-                agentResultJson = resultJson
-            )
-            _uiState.update { it.copy(messages = it.messages + aiMsg, pendingRouteConfirmation = null) }
-        } else {
-            val errMsg = Message(
-                role = Message.ROLE_ASSISTANT,
-                content = "未能识别换算请求。试试：\n`3000米等于多少英尺`\n`100摄氏度转华氏度`\n`10MPa换算psi`"
-            )
-            _uiState.update { it.copy(messages = it.messages + errMsg, pendingRouteConfirmation = null) }
-        }
-        _uiState.update { it.copy(isLoading = false, statusMessage = null) }
-    }
-
     private fun tryResolvePendingConfirmation(text: String, pending: PendingRouteConfirmation): Boolean {
         val normalized = text.trim().lowercase()
         val positive = setOf("是", "好", "好的", "确认", "yes", "y", "ok")
@@ -706,16 +647,6 @@ class ChatManager(
             val userMsg = Message(role = Message.ROLE_USER, content = text)
             _uiState.update { it.copy(messages = it.messages + userMsg, pendingRouteConfirmation = null) }
             when (pending.agentName) {
-                UnitConversionAgent.META.name -> {
-                    sessionContextManager.activate(UnitConversionAgent.META.name, System.currentTimeMillis())
-                    syncActiveAgent()
-                    _uiState.update { it.copy(isLoading = true, statusMessage = "正在换算单位…") }
-                    scope.launch {
-                        delay(120)
-                        dispatchConversionAgentInternal(pending.originalInput)
-                    }
-                    return true
-                }
                 BuiltinAgents.DOCUMENT.name -> {
                     _uiState.update { it.copy(isLoading = true, statusMessage = "正在打开文档管理…") }
                     scope.launch {
@@ -763,7 +694,6 @@ class ChatManager(
                     pendingRouteConfirmation = null
                 )
             }
-            sessionContextManager.clear()
             syncActiveAgent()
             return true
         }
@@ -772,7 +702,7 @@ class ChatManager(
     }
 
     private fun syncActiveAgent() {
-        _uiState.update { it.copy(activeAgent = sessionContextManager.snapshot().activeAgent) }
+        _uiState.update { it.copy(activeAgent = null) }
     }
 
     private fun attachSourcesToLastAssistant(
@@ -1037,8 +967,7 @@ class ChatManager(
     }
 }
 
-internal fun RouteResult.shouldUseLocalDirectAgentBeforeV2(): Boolean =
-    disposition == RouteDisposition.DIRECT && agentName == UnitConversionAgent.META.name
+internal fun RouteResult.shouldUseLocalDirectAgentBeforeV2(): Boolean = false
 
 internal fun V2AgentId.shouldAnswerWithV2Runtime(input: String): Boolean = when (this) {
     V2AgentId.SEARCH,
