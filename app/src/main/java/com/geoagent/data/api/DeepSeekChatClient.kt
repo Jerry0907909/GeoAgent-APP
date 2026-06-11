@@ -17,14 +17,41 @@ import java.util.concurrent.TimeUnit
 
 data class ChatMessage(
     val role: String,
-    val content: String
-)
+    val content: String,
+    val imageBase64: String? = null,
+    val imageMimeType: String = "image/jpeg"
+) {
+    fun toOpenAiMessage(): Map<String, Any> {
+        val image = imageBase64?.takeIf { it.isNotBlank() }
+            ?: return mapOf("role" to role, "content" to content)
+        val mimeType = imageMimeType.takeIf { it.startsWith("image/") } ?: "image/jpeg"
+        return mapOf(
+            "role" to role,
+            "content" to listOf(
+                mapOf("type" to "text", "text" to content),
+                mapOf(
+                    "type" to "image_url",
+                    "image_url" to mapOf("url" to "data:$mimeType;base64,$image")
+                )
+            )
+        )
+    }
+
+    companion object {
+        fun userWithImage(
+            content: String,
+            imageBase64: String,
+            imageMimeType: String = "image/jpeg"
+        ): ChatMessage = ChatMessage("user", content, imageBase64, imageMimeType)
+    }
+}
 
 class DeepSeekChatClient(
     private val client: OkHttpClient,
     baseUrl: String = com.geoagent.BuildConfig.LLM_BASE_URL,
     private val defaultModel: String = com.geoagent.BuildConfig.LLM_MODEL,
-    private val apiKey: String = com.geoagent.BuildConfig.LLM_API_KEY
+    private val apiKey: String = com.geoagent.BuildConfig.LLM_API_KEY,
+    private val defaultMaxTokens: Int = com.geoagent.BuildConfig.LLM_MAX_TOKENS
 ) {
 
     private val gson = Gson()
@@ -42,8 +69,9 @@ class DeepSeekChatClient(
             val requestBody = gson.toJson(
                 mapOf(
                     "model" to model,
-                    "messages" to messages.map { mapOf("role" to it.role, "content" to it.content) },
-                    "stream" to false
+                    "messages" to messages.map { it.toOpenAiMessage() },
+                    "stream" to false,
+                    "max_tokens" to defaultMaxTokens
                 )
             ).toRequestBody(jsonMediaType)
 
@@ -80,8 +108,9 @@ class DeepSeekChatClient(
     ): Flow<ChatEvent> = flow {
         val bodyMap = mutableMapOf<String, Any>(
             "model" to model,
-            "messages" to messages.map { mapOf("role" to it.role, "content" to it.content) },
+            "messages" to messages.map { it.toOpenAiMessage() },
             "stream" to true,
+            "max_tokens" to defaultMaxTokens,
             "enable_thinking" to enableThinking
         )
         if (enableThinking) {
@@ -212,6 +241,6 @@ class DeepSeekChatClient(
     }
 
     private companion object {
-        private const val MIN_THINKING_BUDGET = 128
+        private const val MIN_THINKING_BUDGET = 8192
     }
 }

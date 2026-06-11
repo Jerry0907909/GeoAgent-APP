@@ -1,0 +1,226 @@
+Typewriter 打字器组件 | Element-UI-X
+https://element-ui-x.com/components/typewriter
+
+<!DOCTYPE html>
+
+Typewriter 打字器组件 | Element-UI-X
+
+Element-UI-X 
+
+# Typewriter 打字器组件
+
+# 功能说明
+
+模拟打字效果的文本展示组件，支持以下特性：
+
+可配置的打字动画效果
+
+Markdown 内容渲染
+
+代码语法高亮(通过 Prism.js)
+
+光标雾化效果
+
+插件系统扩展
+
+# 使用示例
+
+# 基础用法
+
+最简单的打字效果，使用默认配置。
+
+预览
+
+重置
+
+<code data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>template</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-x-typewriter</span>
+<span class="token attr-name" data-v-47d1da0a>:content</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>basicContent<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:typing</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>true<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>ref</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>basicDemo<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token punctuation" data-v-47d1da0a>/></span></span>
+
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span> <span class="token attr-name" data-v-47d1da0a>class</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>demo-controls<span class="token punctuation" data-v-47d1da0a>"</span></span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-button-group</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-button</span>
+<span class="token attr-name" data-v-47d1da0a>size</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>small<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>type</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>primary<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>@click</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>startBasic<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token punctuation" data-v-47d1da0a>></span></span>
+预览
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>el-button</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-button</span>
+<span class="token attr-name" data-v-47d1da0a>size</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>small<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>@click</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>resetBasic<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token punctuation" data-v-47d1da0a>></span></span>
+重置
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>el-button</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>el-button-group</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>template</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>script</span><span class="token punctuation" data-v-47d1da0a>></span></span><span class="token script" data-v-47d1da0a><span class="token language-javascript" data-v-47d1da0a>
+<span class="token keyword" data-v-47d1da0a>export</span> <span class="token keyword" data-v-47d1da0a>default</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token function" data-v-47d1da0a>data</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token keyword" data-v-47d1da0a>return</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token literal-property property" data-v-47d1da0a>basicContent</span><span class="token operator" data-v-47d1da0a>:</span> <span class="token string" data-v-47d1da0a>'这是一个基础打字效果演示，展示Typewriter组件的基本功能。'</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token literal-property property" data-v-47d1da0a>methods</span><span class="token operator" data-v-47d1da0a>:</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token function" data-v-47d1da0a>startBasic</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token keyword" data-v-47d1da0a>this</span><span class="token punctuation" data-v-47d1da0a>.</span>$refs<span class="token punctuation" data-v-47d1da0a>.</span>basicDemo<span class="token punctuation" data-v-47d1da0a>.</span><span class="token function" data-v-47d1da0a>restart</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span><span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token function" data-v-47d1da0a>resetBasic</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token keyword" data-v-47d1da0a>this</span><span class="token punctuation" data-v-47d1da0a>.</span>$refs<span class="token punctuation" data-v-47d1da0a>.</span>basicDemo<span class="token punctuation" data-v-47d1da0a>.</span><span class="token function" data-v-47d1da0a>restart</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span><span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>;</span>
+</span></span><span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>script</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>style</span><span class="token punctuation" data-v-47d1da0a>></span></span><span class="token style" data-v-47d1da0a><span class="token language-css" data-v-47d1da0a>
+<span class="token selector" data-v-47d1da0a>.demo-controls</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token property" data-v-47d1da0a>margin-top</span><span class="token punctuation" data-v-47d1da0a>:</span> 15px<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span>
+</span></span><span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>style</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+</code>
+
+显示代码 复制代码 复制代码
+
+# 自定义打字速度和步长
+
+通过 typing 属性配置打字速度和每次打字的字符数。
+
+打字速度： 
+
+快
+
+中
+
+慢
+
+每次字符数： 
+
+预览
+
+<code data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>template</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span> <span class="token attr-name" data-v-47d1da0a>class</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>control-panel<span class="token punctuation" data-v-47d1da0a>"</span></span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span> <span class="token attr-name" data-v-47d1da0a>class</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>control-item<span class="token punctuation" data-v-47d1da0a>"</span></span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>span</span><span class="token punctuation" data-v-47d1da0a>></span></span>打字速度：<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>span</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-slider</span>
+<span class="token attr-name" data-v-47d1da0a>v-model</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>typingConfig.interval<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:min</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>10<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:max</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>100<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:step</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>5<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:marks</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>{ 10: '快', 50: '中', 100: '慢' }<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token special-attr" data-v-47d1da0a><span class="token attr-name" data-v-47d1da0a>style</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span><span class="token value css language-css" data-v-47d1da0a><span class="token property" data-v-47d1da0a>width</span><span class="token punctuation" data-v-47d1da0a>:</span> 200px<span class="token punctuation" data-v-47d1da0a>;</span></span><span class="token punctuation" data-v-47d1da0a>"</span></span></span>
+<span class="token punctuation" data-v-47d1da0a>/></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span> <span class="token attr-name" data-v-47d1da0a>class</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>control-item<span class="token punctuation" data-v-47d1da0a>"</span></span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>span</span><span class="token punctuation" data-v-47d1da0a>></span></span>每次字符数：<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>span</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-slider</span>
+<span class="token attr-name" data-v-47d1da0a>v-model</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>typingConfig.step<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:min</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>1<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:max</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>5<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:step</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>1<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token special-attr" data-v-47d1da0a><span class="token attr-name" data-v-47d1da0a>style</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span><span class="token value css language-css" data-v-47d1da0a><span class="token property" data-v-47d1da0a>width</span><span class="token punctuation" data-v-47d1da0a>:</span> 200px<span class="token punctuation" data-v-47d1da0a>;</span></span><span class="token punctuation" data-v-47d1da0a>"</span></span></span>
+<span class="token punctuation" data-v-47d1da0a>/></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-x-typewriter</span>
+<span class="token attr-name" data-v-47d1da0a>:content</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>speedContent<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>:typing</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>typingConfig<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>ref</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>speedDemo<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token punctuation" data-v-47d1da0a>/></span></span>
+
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span> <span class="token attr-name" data-v-47d1da0a>class</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>demo-controls<span class="token punctuation" data-v-47d1da0a>"</span></span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-button</span>
+<span class="token attr-name" data-v-47d1da0a>size</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>small<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>type</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>primary<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>@click</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>startSpeedDemo<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token punctuation" data-v-47d1da0a>></span></span>
+预览
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>el-button</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>template</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>script</span><span class="token punctuation" data-v-47d1da0a>></span></span><span class="token script" data-v-47d1da0a><span class="token language-javascript" data-v-47d1da0a>
+<span class="token keyword" data-v-47d1da0a>export</span> <span class="token keyword" data-v-47d1da0a>default</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token function" data-v-47d1da0a>data</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token keyword" data-v-47d1da0a>return</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token literal-property property" data-v-47d1da0a>speedContent</span><span class="token operator" data-v-47d1da0a>:</span>
+<span class="token string" data-v-47d1da0a>'通过配置可以调整打字速度和每次打字的字符数，实现不同的打字效果。速度越慢，interval值越大；步长越大，每次显示的字符越多。'</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token literal-property property" data-v-47d1da0a>typingConfig</span><span class="token operator" data-v-47d1da0a>:</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token literal-property property" data-v-47d1da0a>interval</span><span class="token operator" data-v-47d1da0a>:</span> <span class="token number" data-v-47d1da0a>40</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token literal-property property" data-v-47d1da0a>step</span><span class="token operator" data-v-47d1da0a>:</span> <span class="token number" data-v-47d1da0a>2</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token literal-property property" data-v-47d1da0a>suffix</span><span class="token operator" data-v-47d1da0a>:</span> <span class="token string" data-v-47d1da0a>'|'</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token literal-property property" data-v-47d1da0a>methods</span><span class="token operator" data-v-47d1da0a>:</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token function" data-v-47d1da0a>startSpeedDemo</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token keyword" data-v-47d1da0a>this</span><span class="token punctuation" data-v-47d1da0a>.</span>$refs<span class="token punctuation" data-v-47d1da0a>.</span>speedDemo<span class="token punctuation" data-v-47d1da0a>.</span><span class="token function" data-v-47d1da0a>restart</span><span class="token punctuation" data-v-47d1da0a>(</span><span class="token punctuation" data-v-47d1da0a>)</span><span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>,</span>
+<span class="token punctuation" data-v-47d1da0a>}</span><span class="token punctuation" data-v-47d1da0a>;</span>
+</span></span><span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>script</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>style</span><span class="token punctuation" data-v-47d1da0a>></span></span><span class="token style" data-v-47d1da0a><span class="token language-css" data-v-47d1da0a>
+<span class="token selector" data-v-47d1da0a>.control-panel</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token property" data-v-47d1da0a>margin-bottom</span><span class="token punctuation" data-v-47d1da0a>:</span> 20px<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token property" data-v-47d1da0a>border</span><span class="token punctuation" data-v-47d1da0a>:</span> 1px solid #ebeef5<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token property" data-v-47d1da0a>border-radius</span><span class="token punctuation" data-v-47d1da0a>:</span> 4px<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token property" data-v-47d1da0a>padding</span><span class="token punctuation" data-v-47d1da0a>:</span> 15px<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token property" data-v-47d1da0a>background-color</span><span class="token punctuation" data-v-47d1da0a>:</span> #f8f8f8<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span>
+<span class="token selector" data-v-47d1da0a>.control-item</span> <span class="token punctuation" data-v-47d1da0a>{</span>
+<span class="token property" data-v-47d1da0a>display</span><span class="token punctuation" data-v-47d1da0a>:</span> flex<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token property" data-v-47d1da0a>align-items</span><span class="token punctuation" data-v-47d1da0a>:</span> center<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token property" data-v-47d1da0a>margin-bottom</span><span class="token punctuation" data-v-47d1da0a>:</span> 10px<span class="token punctuation" data-v-47d1da0a>;</span>
+<span class="token punctuation" data-v-47d1da0a>}</span>
+</span></span><span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>style</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+</code>
+
+显示代码 复制代码 复制代码
+
+# 自定义光标
+
+通过 typing.suffix 属性自定义光标字符。
+
+光标字符： 
+
+|
+
+_
+
+❚
+
+▊
+
+➤
+
+😊
+
+无数据
+
+预览
+
+<code data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>template</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span> <span class="token attr-name" data-v-47d1da0a>class</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>control-panel<span class="token punctuation" data-v-47d1da0a>"</span></span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>div</span> <span class="token attr-name" data-v-47d1da0a>class</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>control-item<span class="token punctuation" data-v-47d1da0a>"</span></span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>span</span><span class="token punctuation" data-v-47d1da0a>></span></span>光标字符：<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a></</span>span</span><span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-select</span>
+<span class="token attr-name" data-v-47d1da0a>v-model</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>cursorChar<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>placeholder</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>选择光标字符<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token special-attr" data-v-47d1da0a><span class="token attr-name" data-v-47d1da0a>style</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span><span class="token value css language-css" data-v-47d1da0a><span class="token property" data-v-47d1da0a>width</span><span class="token punctuation" data-v-47d1da0a>:</span> 120px<span class="token punctuation" data-v-47d1da0a>;</span></span><span class="token punctuation" data-v-47d1da0a>"</span></span></span>
+<span class="token punctuation" data-v-47d1da0a>></span></span>
+<span class="token tag" data-v-47d1da0a><span class="token tag" data-v-47d1da0a><span class="token punctuation" data-v-47d1da0a><</span>el-option</span>
+<span class="token attr-name" data-v-47d1da0a>label</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation attr-equals" data-v-47d1da0a>=</span><span class="token punctuation" data-v-47d1da0a>"</span>|<span class="token punctuation" data-v-47d1da0a>"</span></span>
+<span class="token attr-name" data-v-47d1da0a>value</span><span class="token attr-value" data-v-47d1da0a><span class="token punctuation
+
+[… truncated 77160 chars …]

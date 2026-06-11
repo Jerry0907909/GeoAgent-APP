@@ -11,6 +11,7 @@
     <string name="verification_code">验证码</string>
     <string name="send_verification_code">发送验证码</string>
     <string name="forgot_password">忘记密码?</string>
+    <string name="reset_password">重置密码</string>
     <string name="no_account_register">没有账号？立即注册</string>
     <string name="has_account_login">已有账号？去登录</string>
     <string name="username">用户名</string>
@@ -46,6 +47,8 @@
     <string name="deep_thinking">思考模式</string>
     <string name="smart_search">智能搜索</string>
     <string name="add_image">添加图片</string>
+    <string name="selected_image">已选择图片</string>
+    <string name="remove_image">移除图片</string>
     <string name="copy">复制</string>
     <string name="regenerate">重新生成</string>
     <string name="empty_chat_hint_chat">使用快速模式开始对话</string>
@@ -58,6 +61,7 @@
     <string name="click_upload">点击上传文档</string>
     <string name="upload_count">上传 %d 个文件</string>
     <string name="knowledge_base">知识库</string>
+    <string name="rename_document">重命名文档</string>
 
     <!-- Settings -->
     <string name="settings">设置</string>
@@ -67,6 +71,8 @@
     <string name="profile">个人资料</string>
     <string name="full_name">姓名</string>
     <string name="avatar">头像</string>
+    <string name="choose_avatar">选择头像</string>
+    <string name="avatar_size">头像尺寸</string>
     <string name="save">保存</string>
     <string name="cancel">取消</string>
     <string name="change_password">修改密码</string>

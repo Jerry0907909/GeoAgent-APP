@@ -177,7 +177,8 @@ class LoginActivity : AppCompatActivity() {
         }
         tvForgot.setOnClickListener {
             MotionUtils.press(it)
-            Toast.makeText(this, "请使用验证码登录或切换到注册页重新设置密码。", Toast.LENGTH_LONG).show()
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
+            TransitionHelper.forward(this)
         }
         findViewById<TextView>(R.id.tv_to_register).setOnClickListener {
             MotionUtils.press(it)

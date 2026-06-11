@@ -207,6 +207,39 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <FrameLayout
+                android:id="@+id/pending_image_preview"
+                android:layout_width="96dp"
+                android:layout_height="72dp"
+                android:layout_marginBottom="10dp"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/iv_pending_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_pending_image_preview"
+                    android:clipToOutline="true"
+                    android:contentDescription="@string/selected_image"
+                    android:scaleType="centerCrop" />
+
+                <ImageView
+                    android:id="@+id/btn_remove_pending_image"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_pending_image_remove"
+                    android:clickable="true"
+                    android:contentDescription="@string/remove_image"
+                    android:focusable="true"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_close"
+                    app:tint="@color/on_primary" />
+            </FrameLayout>
+
             <EditText
                 android:id="@+id/et_message"
                 android:layout_width="0dp"
@@ -223,7 +256,7 @@
                 android:textSize="16sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toBottomOf="@id/pending_image_preview" />
 
             <LinearLayout
                 android:id="@+id/action_row"

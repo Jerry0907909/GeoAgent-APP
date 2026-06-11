@@ -122,11 +122,20 @@ class AuthRepositoryImpl(
 
     override suspend fun updateMe(fullName: String?, avatarUrl: String?): Result<UserResponse> {
         val current = getMe().getOrElse { return Result.failure(it) }
-        if (!fullName.isNullOrBlank()) {
-            apiKeyStore.saveDisplayName(fullName.trim())
+        val email = apiKeyStore.currentUserEmail.first()
+            ?: return Result.failure(IllegalStateException("未登录"))
+        val requestedUsername = fullName?.trim()?.takeIf { it.isNotEmpty() }
+        if (requestedUsername != null) {
+            val username = requestedUsername
+            val updated = runCatching { accountStore.updateUsername(email, username) }
+                .getOrElse { return Result.failure(it) }
+            if (!updated) return Result.failure(IllegalStateException("用户不存在"))
+            apiKeyStore.saveDisplayName(username)
         }
+        val username = requestedUsername ?: current.username
         val updated = current.copy(
-            full_name = fullName?.trim() ?: current.full_name,
+            username = username,
+            full_name = username,
             avatar_url = avatarUrl ?: current.avatar_url
         )
         cachedProfile = updated
@@ -154,6 +163,35 @@ class AuthRepositoryImpl(
         }
 
         accountStore.saveUser(email, newPassword.hashCode().toString(), user.username)
+        return Result.success(Unit)
+    }
+
+    override suspend fun resetPassword(
+        email: String,
+        code: String,
+        newPassword: String,
+        confirmPassword: String
+    ): Result<Unit> {
+        val normalizedEmail = email.trim()
+        if (!normalizedEmail.contains("@")) {
+            return Result.failure(IllegalArgumentException("请输入有效邮箱"))
+        }
+        if (!verificationCodeStore.verify(normalizedEmail, code)) {
+            return Result.failure(IllegalArgumentException("验证码错误或已过期"))
+        }
+        if (newPassword != confirmPassword) {
+            return Result.failure(IllegalArgumentException("两次输入的新密码不一致"))
+        }
+        if (newPassword.length < 6) {
+            return Result.failure(IllegalArgumentException("密码长度至少 6 位"))
+        }
+        if (accountStore.getUserByEmail(normalizedEmail) == null) {
+            return Result.failure(IllegalArgumentException("该邮箱未注册"))
+        }
+        if (!accountStore.updatePassword(normalizedEmail, newPassword.hashCode().toString())) {
+            return Result.failure(IllegalStateException("密码重置失败"))
+        }
+        verificationCodeStore.clear()
         return Result.success(Unit)
     }
 

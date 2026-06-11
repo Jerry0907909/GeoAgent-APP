@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
 class GeoAgentDatabase(context: Context) : SQLiteOpenHelper(
-    context.applicationContext, "geoagent.db", null, 2
+    context.applicationContext, "geoagent.db", null, 3
 ) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -37,6 +37,7 @@ class GeoAgentDatabase(context: Context) : SQLiteOpenHelper(
                 FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
             )
         """)
+        createDocumentImagesTable(db)
         db.execSQL("""
             CREATE TABLE messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,6 +57,7 @@ class GeoAgentDatabase(context: Context) : SQLiteOpenHelper(
         """)
         db.execSQL("CREATE INDEX idx_chunks_doc ON chunks(document_id)")
         db.execSQL("CREATE INDEX idx_embeddings_doc ON embeddings(document_id)")
+        db.execSQL("CREATE INDEX idx_document_images_doc ON document_images(document_id)")
         db.execSQL("CREATE INDEX idx_messages_conv ON messages(conversation_id)")
     }
 
@@ -76,5 +78,22 @@ class GeoAgentDatabase(context: Context) : SQLiteOpenHelper(
                 GROUP BY conversation_id
             """)
         }
+        if (oldVersion < 3) {
+            createDocumentImagesTable(db)
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_document_images_doc ON document_images(document_id)")
+        }
+    }
+
+    private fun createDocumentImagesTable(db: SQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS document_images (
+                id TEXT PRIMARY KEY,
+                document_id TEXT NOT NULL,
+                image_index INTEGER NOT NULL,
+                path TEXT NOT NULL,
+                mime_type TEXT NOT NULL,
+                FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+            )
+        """)
     }
 }

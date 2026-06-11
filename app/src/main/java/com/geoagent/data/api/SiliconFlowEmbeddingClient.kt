@@ -32,39 +32,45 @@ class SiliconFlowEmbeddingClient(private val client: OkHttpClient) {
         if (apiKey.isBlank()) {
             return Result.failure(IllegalStateException("请先设置 SiliconFlow API Key"))
         }
+        if (texts.isEmpty()) return Result.success(emptyList())
         return withContext(Dispatchers.IO) {
             try {
-                val requestBody = gson.toJson(mapOf(
-                    "model" to model,
-                    "input" to texts,
-                    "encoding_format" to "float"
-                )).toRequestBody(jsonMediaType)
-
                 val httpClient = client.newBuilder()
                     .connectTimeout(30, TimeUnit.SECONDS)
                     .readTimeout(60, TimeUnit.SECONDS)
                     .build()
 
-                val request = Request.Builder()
-                    .url(baseUrl)
-                    .post(requestBody)
-                    .header("Authorization", "Bearer $apiKey")
-                    .header("Content-Type", "application/json")
-                    .build()
+                val embeddings = mutableListOf<FloatArray>()
+                for (batch in texts.chunked(maxBatchSize)) {
+                    val requestBody = gson.toJson(mapOf(
+                        "model" to model,
+                        "input" to batch,
+                        "encoding_format" to "float"
+                    )).toRequestBody(jsonMediaType)
 
-                val response = httpClient.newCall(request).execute()
-                response.use { resp ->
-                    if (!resp.isSuccessful) {
-                        return@withContext Result.failure(Exception("Embedding API HTTP ${resp.code}"))
+                    val request = Request.Builder()
+                        .url(baseUrl)
+                        .post(requestBody)
+                        .header("Authorization", "Bearer $apiKey")
+                        .header("Content-Type", "application/json")
+                        .build()
+
+                    val response = httpClient.newCall(request).execute()
+                    response.use { resp ->
+                        if (!resp.isSuccessful) {
+                            return@withContext Result.failure(Exception("Embedding API HTTP ${resp.code}"))
+                        }
+                        val body = resp.body?.string().orEmpty()
+                        val json = JsonParser.parseString(body).asJsonObject
+                        val data = json.getAsJsonArray("data")
+                        embeddings += data
+                            .sortedBy { it.asJsonObject.get("index")?.asInt ?: 0 }
+                            .map { item ->
+                                item.asJsonObject.getAsJsonArray("embedding").map { it.asFloat }.toFloatArray()
+                            }
                     }
-                    val body = resp.body?.string().orEmpty()
-                    val json = JsonParser.parseString(body).asJsonObject
-                    val data = json.getAsJsonArray("data")
-                    val embeddings = data.map { item ->
-                        item.asJsonObject.getAsJsonArray("embedding").map { it.asFloat }.toFloatArray()
-                    }
-                    Result.success(embeddings)
                 }
+                Result.success(embeddings)
             } catch (e: Exception) {
                 Result.failure(e)
             }

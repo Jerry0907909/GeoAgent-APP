@@ -489,6 +489,23 @@ class V2RuntimeOrchestratorTest {
         assertTrue(gateway.lastUserPrompt.contains("盆地沉积报告"))
     }
 
+    @Test
+    fun searchRuntimeUsesSameConversationHistoryForFollowUpQuestions() = runBlocking {
+        orchestrator.orchestrate(
+            request = V2RuntimeRequest(
+                input = "搜索它最近有哪些热梗",
+                history = listOf(
+                    V2RuntimeHistoryMessage("user", "这是什么"),
+                    V2RuntimeHistoryMessage("assistant", "这是一只北美负鼠。")
+                )
+            )
+        )
+
+        assertTrue(gateway.lastSearchQuestion.contains("北美负鼠"))
+        assertTrue(gateway.lastUserPrompt.contains("同一会话前文"))
+        assertTrue(gateway.lastUserPrompt.contains("北美负鼠"))
+    }
+
     private class FakeRuntimeGateway : V2RuntimeGateway {
         var searchCalls = 0
         var ragCalls = 0
@@ -503,6 +520,7 @@ class V2RuntimeOrchestratorTest {
         var recallMemoryCalls = 0
         var returnNoRagChunks = false
         var lastUserPrompt = ""
+        var lastSearchQuestion = ""
         var lastEmailRequest: V2EmailRequest? = null
         var memoriesToRecall: List<V2RuntimeMemory> = emptyList()
         var nextEmailDecisionJson: String? = null
@@ -547,6 +565,7 @@ class V2RuntimeOrchestratorTest {
 
         override suspend fun search(question: String): Result<V2RuntimeSearchResult> {
             searchCalls += 1
+            lastSearchQuestion = question
             return Result.success(
                 V2RuntimeSearchResult(
                     enhancedPrompt = "enhanced:$question",

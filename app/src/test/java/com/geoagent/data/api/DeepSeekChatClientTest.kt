@@ -129,6 +129,31 @@ class DeepSeekChatClientTest {
         assertEquals("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", requestUrl)
     }
 
+    @Test
+    fun streamChatSendsImageAsOpenAiCompatibleVisionContent() = runBlocking {
+        var requestBody = ""
+        val client = DeepSeekChatClient(
+            fakeClient("data: [DONE]\n", onRequestBody = { requestBody = it })
+        )
+
+        withTimeout(1_000L) {
+            client.streamChat(
+                listOf(ChatMessage.userWithImage("这是什么", "abc123")),
+                "test-key"
+            ).collect { }
+        }
+
+        val json = JsonParser.parseString(requestBody).asJsonObject
+        val content = json.getAsJsonArray("messages")[0].asJsonObject.getAsJsonArray("content")
+        assertEquals("text", content[0].asJsonObject.get("type").asString)
+        assertEquals("这是什么", content[0].asJsonObject.get("text").asString)
+        assertEquals("image_url", content[1].asJsonObject.get("type").asString)
+        assertEquals(
+            "data:image/jpeg;base64,abc123",
+            content[1].asJsonObject.getAsJsonObject("image_url").get("url").asString
+        )
+    }
+
     private fun reasoningChunkBody(): String {
         return """
             data: {"choices":[{"delta":{"reasoning_content":"thinking","content":"answer"}}]}

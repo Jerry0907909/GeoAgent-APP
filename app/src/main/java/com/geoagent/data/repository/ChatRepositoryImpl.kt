@@ -10,9 +10,11 @@ import com.geoagent.data.api.dto.ChatResponse
 import com.geoagent.data.api.dto.ChatStreamRequest
 import com.geoagent.data.api.dto.SourceDto
 import com.geoagent.data.local.ApiKeyStore
+import com.geoagent.data.local.DocumentChunker
 import com.geoagent.data.local.DocumentStore
 import com.geoagent.data.local.GeoAgentDatabase
 import com.geoagent.data.local.UserPrefsDataStore
+import com.geoagent.domain.ConversationContextBuilder
 import com.geoagent.domain.SearchContext
 import com.geoagent.domain.SearchPromptTools
 import com.geoagent.domain.SearchUseCase
@@ -59,6 +61,11 @@ class ChatRepositoryImpl(
             emit(ChatEvent.Error("请先设置 DeepSeek API Key"))
             return@flow
         }
+        val contextQuestion = ConversationContextBuilder.buildChatContextQuestion(
+            question = request.message,
+            history = request.history
+        )
+        val ragChunks = if (request.mode == "rag") searchByEmbedding(contextQuestion) else emptyList()
 
         val searchContext = if (request.web_search == true) {
             emit(ChatEvent.Status("智能搜索中…"))
@@ -69,7 +76,7 @@ class ChatRepositoryImpl(
             }
             var context: SearchContext? = null
             var error: String? = null
-            searchUseCase.searchRequiredContext(request.message, tavilyKey).collect { event ->
+            searchUseCase.searchRequiredContext(contextQuestion, tavilyKey).collect { event ->
                 when (event) {
                     is SearchUseCaseEvent.Status -> emit(ChatEvent.Status("正在检索网络来源…"))
                     is SearchUseCaseEvent.Plan -> {
@@ -96,10 +103,11 @@ class ChatRepositoryImpl(
         } else null
 
         val searchResults = searchContext?.toSourceDtos().orEmpty()
+        val ragResults = ragChunks.toSourceDtos()
         val chatRequest = if (searchContext != null) {
             request.copy(message = searchContext.enhancedPrompt)
         } else request
-        val messages = buildMessages(chatRequest)
+        val messages = buildMessages(chatRequest, ragChunks)
         var emittedContent = false
         var retrySearchSynthesis = false
         deepSeekClient.streamChat(messages, apiKey, enableThinking = request.enable_thinking).collect { event ->
@@ -111,11 +119,14 @@ class ChatRepositoryImpl(
                 }
                 is ChatEvent.Status -> emit(event)
                 is ChatEvent.Done -> {
-                    if (searchResults.isNotEmpty()) emit(ChatEvent.Sources(searchResults))
+                    when {
+                        ragResults.isNotEmpty() -> emit(ChatEvent.Sources(ragResults))
+                        searchResults.isNotEmpty() -> emit(ChatEvent.Sources(searchResults))
+                    }
                     emit(event)
                 }
                 is ChatEvent.Sources -> {
-                    if (searchResults.isEmpty()) emit(event)
+                    if (searchResults.isEmpty() && ragResults.isEmpty()) emit(event)
                 }
                 is ChatEvent.Error -> {
                     if (searchContext != null && !emittedContent) {
@@ -133,9 +144,10 @@ class ChatRepositoryImpl(
             var retryEmittedContent = false
             val retryMessages = buildMessages(
                 request.copy(
-                    message = SearchPromptTools.buildRetryPrompt(request.message, searchContext!!.results),
+                    message = SearchPromptTools.buildRetryPrompt(contextQuestion, searchContext!!.results),
                     web_search = true
-                )
+                ),
+                emptyList()
             )
             deepSeekClient.streamChat(retryMessages, apiKey).collect { event ->
                 when (event) {
@@ -153,7 +165,7 @@ class ChatRepositoryImpl(
                     }
                     is ChatEvent.Error -> {
                         if (!retryEmittedContent) {
-                            emit(ChatEvent.Content(SearchPromptTools.buildFallbackAnswer(request.message, searchContext.results)))
+                            emit(ChatEvent.Content(SearchPromptTools.buildFallbackAnswer(contextQuestion, searchContext.results)))
                             if (searchResults.isNotEmpty()) emit(ChatEvent.Sources(searchResults))
                             emit(ChatEvent.Done())
                         } else {
@@ -394,13 +406,10 @@ class ChatRepositoryImpl(
     }
 
     private suspend fun buildMessages(
-        request: ChatStreamRequest
+        request: ChatStreamRequest,
+        ragChunks: List<RagSourceChunk> = emptyList()
     ): List<ChatMessage> {
         val messages = mutableListOf<ChatMessage>()
-
-        val ragChunks = if (request.mode == "rag") {
-            searchByEmbedding(request.message)
-        } else emptyList()
 
         val systemPrompt = buildString {
             if (request.web_search == true) {
@@ -409,15 +418,19 @@ class ChatRepositoryImpl(
                 append("你是一个专业的地质学文献智能助手，擅长回答地质学相关问题。")
             }
             append("请始终使用简体中文输出；如果启用思考模式，思考过程也必须使用简体中文，不要输出英文步骤名、英文解释或英文括注。")
+            if (request.history.isNotEmpty()) {
+                append(" 当前问题可能引用前文中的对象、主题或结论，必须结合最近对话历史理解代词和省略表达。")
+            }
             val customInstruction = userPrefsDataStore.customInstruction.first().trim()
             if (customInstruction.isNotBlank()) {
                 append("\n\n用户自定义指令：")
                 append(customInstruction)
             }
             if (ragChunks.isNotEmpty()) {
-                append("\n\n以下是从用户上传文献中检索到的相关内容，请基于此回答，末尾标注【来源】：\n")
+                append("\n\n以下是从用户上传文献中检索到的相关内容，请基于此回答。")
+                append("正文引用只使用 [1]、[2] 这样的编号，不要输出【来源】、来源列表或裸链接；来源由界面组件展示。\n")
                 ragChunks.forEachIndexed { i, chunk ->
-                    append("\n--- 文献块 ${i + 1} ---\n$chunk\n")
+                    append("\n--- 文献块 ${i + 1}｜${chunk.documentName}#${chunk.chunkIndex} ---\n${chunk.text}\n")
                 }
             }
         }
@@ -429,11 +442,14 @@ class ChatRepositoryImpl(
             }
         }
 
-        if (request.image_base64 != null) {
-            messages.add(ChatMessage("user", buildString {
-                append(request.message)
-                append("\n[图片已作为上下文提供]")
-            }))
+        if (!request.image_base64.isNullOrBlank()) {
+            messages.add(
+                ChatMessage.userWithImage(
+                    request.message,
+                    request.image_base64,
+                    request.image_mime_type ?: "image/jpeg"
+                )
+            )
         } else {
             messages.add(ChatMessage("user", request.message))
         }
@@ -441,7 +457,7 @@ class ChatRepositoryImpl(
         return messages
     }
 
-    private suspend fun searchByEmbedding(query: String): List<String> {
+    private suspend fun searchByEmbedding(query: String): List<RagSourceChunk> {
         return try {
             val apiKey = siliconFlowApiKey() ?: return emptyList()
             val queryEmbedding = embeddingClient.embedSingle(query, apiKey).getOrNull() ?: return emptyList()
@@ -449,24 +465,54 @@ class ChatRepositoryImpl(
             val allEmbeddings = documentStore.getAllEmbeddings()
             if (allEmbeddings.isEmpty()) return emptyList()
 
-            val chunkTexts = mutableMapOf<String, String>()
-            val chunks = documentStore.getAllChunks()
-            for ((docId, chunk) in chunks) {
-                chunkTexts["${docId}_${chunk.index}"] = chunk.text
+            val documentsById = documentStore.getDocumentsSnapshot().associateBy { it.id }
+            val chunkTexts = mutableMapOf<String, RagSourceChunk>()
+            val indexableChunks = documentStore.getAllChunks()
+                .groupBy({ it.first }, { it.second })
+                .flatMap { (docId, chunks) ->
+                    DocumentChunker.indexableStoredChunks(chunks).map { docId to it }
+                }
+            for ((docId, chunk) in indexableChunks) {
+                val document = documentsById[docId]
+                chunkTexts["${docId}_${chunk.index}"] = RagSourceChunk(
+                    documentId = docId,
+                    documentName = document?.name ?: docId,
+                    chunkIndex = chunk.index,
+                    text = chunk.text,
+                    score = 0f
+                )
             }
 
-            val scored = allEmbeddings.map { (chunkId, _, vec) ->
-                val similarity = cosineSimilarity(queryEmbedding, vec)
-                chunkId to similarity
-            }
+            val scored = allEmbeddings
+                .filter { (chunkId, _, _) -> chunkTexts.containsKey(chunkId) }
+                .map { (chunkId, _, vec) ->
+                    val similarity = cosineSimilarity(queryEmbedding, vec)
+                    chunkId to similarity
+                }
                 .filter { it.second > 0.3f }
                 .sortedByDescending { it.second }
                 .take(5)
 
-            scored.mapNotNull { (chunkId, _) -> chunkTexts[chunkId] }
+            scored.mapNotNull { (chunkId, score) -> chunkTexts[chunkId]?.copy(score = score) }
         } catch (_: Exception) {
             emptyList()
         }
+    }
+
+    private fun List<RagSourceChunk>.toSourceDtos(): List<SourceDto> {
+        return distinctBy { it.documentId }
+            .map { firstChunk ->
+                val documentChunks = filter { it.documentId == firstChunk.documentId }
+                SourceDto(
+                    content = documentChunks.joinToString("\n\n") { it.text }.take(SOURCE_CONTENT_LIMIT),
+                    source = firstChunk.documentName,
+                    url = null,
+                    type = "knowledge_base",
+                    relevance_score = documentChunks.maxOfOrNull { it.score },
+                    document_id = firstChunk.documentId,
+                    document_name = firstChunk.documentName
+                )
+            }
     }
 
     private fun cosineSimilarity(a: FloatArray, b: FloatArray): Float {
@@ -482,4 +528,12 @@ class ChatRepositoryImpl(
         val denom = sqrt(normA * normB)
         return if (denom > 0f) dot / denom else 0f
     }
+
+    private data class RagSourceChunk(
+        val documentId: String,
+        val documentName: String,
+        val chunkIndex: Int,
+        val text: String,
+        val score: Float
+    )
 }

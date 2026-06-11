@@ -12,6 +12,7 @@ interface AuthRepository {
     suspend fun getMe(): Result<UserResponse>
     suspend fun updateMe(fullName: String?, avatarUrl: String? = null): Result<UserResponse>
     suspend fun changePassword(oldPassword: String, newPassword: String, confirmPassword: String): Result<Unit>
+    suspend fun resetPassword(email: String, code: String, newPassword: String, confirmPassword: String): Result<Unit>
     suspend fun isLoggedIn(): Boolean
     suspend fun sendEmail(toAddr: String, subject: String, content: String): Result<EmailSendResponse>
     suspend fun getEmailHistory(limit: Int = 20): Result<EmailHistoryResponse>

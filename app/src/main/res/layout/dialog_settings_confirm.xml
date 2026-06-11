@@ -50,7 +50,7 @@
             android:layout_width="88dp"
             android:layout_height="40dp"
             android:layout_marginStart="10dp"
-            android:background="@drawable/bg_dialog_button_secondary"
+            android:background="@drawable/bg_dialog_button_destructive"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"

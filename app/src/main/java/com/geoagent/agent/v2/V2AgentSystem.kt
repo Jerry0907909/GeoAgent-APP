@@ -137,8 +137,10 @@ data class V2EmailRequest(
 
 data class V2ExecutionContext(
     val originalInput: String,
+    val contextualInput: String = originalInput,
     val previousRuns: List<V2AgentRun>,
     val imageBase64: String? = null,
+    val imageMimeType: String? = null,
     val history: List<V2RuntimeHistoryMessage> = emptyList(),
     val onContent: suspend (V2AgentId, String) -> Unit = { _, _ -> }
 )

@@ -28,5 +28,10 @@ data class SearchSource(
     val title: String,
     val url: String,
     val content: String = "",
-    val publishedDate: String? = null
+    val publishedDate: String? = null,
+    val type: String = "web",
+    val documentId: String? = null
 )
+
+fun SearchSource.isKnowledgeBaseSource(): Boolean =
+    type == "knowledge_base" || type == "document" || documentId != null

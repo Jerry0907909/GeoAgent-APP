@@ -17,6 +17,7 @@ import com.geoagent.agent.v2.V2RuntimeRequest
 import com.geoagent.agent.v2.V2AgentId
 import com.geoagent.agent.v2.V2AgentRunStatus
 import com.geoagent.agent.v2.V2StageEvent
+import com.geoagent.agent.v2.v2ArtifactJson
 import com.geoagent.data.api.dto.ChatEvent
 import com.geoagent.data.api.dto.ChatHistoryMessage
 import com.geoagent.data.api.dto.ChatStreamRequest
@@ -168,7 +169,11 @@ class ChatManager(
         _uiState.update { it.copy(deepThinkingEnabled = enabled) }
     }
 
-    fun sendMessage(text: String, imageBase64: String? = null) {
+    fun sendMessage(
+        text: String,
+        imageBase64: String? = null,
+        imageMimeType: String? = null
+    ) {
         val pending = _uiState.value.pendingRouteConfirmation
         if (pending != null && imageBase64 == null) {
             val handled = tryResolvePendingConfirmation(text, pending)
@@ -200,9 +205,14 @@ class ChatManager(
             return
         }
 
+        val currentMode = _uiState.value.currentMode
         val v2Plan = v2Orchestrator.plan(text)
-        if ((!useExplicitWebSearch || explicitEmailRoute) && v2Plan.tasks.any { it.agentId.shouldAnswerWithV2Runtime(text) }) {
-            dispatchV2RuntimeMessage(text, imageBase64)
+        if (
+            currentMode != ChatMode.RAG &&
+            (!useExplicitWebSearch || explicitEmailRoute) &&
+            v2Plan.tasks.any { it.agentId.shouldAnswerWithV2Runtime(text) }
+        ) {
+            dispatchV2RuntimeMessage(text, imageBase64, imageMimeType)
             return
         }
 
@@ -316,6 +326,7 @@ class ChatManager(
                     enable_thinking = thinkingEnabled,
                     return_sources = true,
                     image_base64 = imageBase64,
+                    image_mime_type = imageMimeType,
                     history = requestHistory
                 )
             )
@@ -355,6 +366,9 @@ class ChatManager(
                     is ChatEvent.Sources -> {
                         flushPendingStreamContent(forceContent = true)
                         pendingSources = mergeSources(pendingSources, event.sources)
+                        if (event.sources.all { it.isKnowledgeBaseSource() }) {
+                            _uiState.update { state -> attachSourcesToLastAssistant(state, event.sources) }
+                        }
                     }
                     is ChatEvent.Done -> {
                         flushPendingStreamContent(forceContent = true)
@@ -388,7 +402,11 @@ class ChatManager(
         }
     }
 
-    private fun dispatchV2RuntimeMessage(text: String, imageBase64: String?) {
+    private fun dispatchV2RuntimeMessage(
+        text: String,
+        imageBase64: String?,
+        imageMimeType: String?
+    ) {
         val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
         val convId = _uiState.value.conversationId ?: (System.currentTimeMillis() % 100000).toInt()
         val agentId = v2Orchestrator.plan(text).tasks.firstOrNull()?.agentId
@@ -416,7 +434,12 @@ class ChatManager(
             runCatching {
                 withContext(streamDispatcher) {
                     v2RuntimeOrchestrator.orchestrate(
-                        request = V2RuntimeRequest(text, imageBase64, history),
+                        request = V2RuntimeRequest(
+                            input = text,
+                            imageBase64 = imageBase64,
+                            imageMimeType = imageMimeType,
+                            history = history
+                        ),
                         onEvent = { event ->
                             stageEvents += event
                             _uiState.update { state ->
@@ -513,13 +536,17 @@ class ChatManager(
         val contentChunk = synchronized(pendingStreamContent) {
             if (pendingStreamContent.isEmpty()) {
                 ""
-            } else if (forceContent || shouldRevealPendingAnswerContent()) {
+            } else if (forceContent) {
                 pendingStreamContent.toString().also {
                     pendingStreamContent.clear()
                     shouldHoldFirstAnswerFrame = false
                 }
+            } else if (shouldRevealPendingAnswerContent()) {
+                shouldHoldFirstAnswerFrame = false
+                consumeFromBuffer(pendingStreamContent, FIRST_FRAME_CHARS)
             } else {
-                ""
+                val limit = computeStreamCharLimit(pendingStreamContent.length)
+                consumeFromBuffer(pendingStreamContent, limit)
             }
         }
         val v2Chunks = synchronized(pendingV2ContentByAgent) {
@@ -578,6 +605,23 @@ class ChatManager(
             }
             state.copy(messages = msgs, statusMessage = null)
         }
+    }
+
+    private fun consumeFromBuffer(buffer: StringBuilder, limit: Int): String {
+        if (buffer.isEmpty() || limit <= 0) return ""
+        val full = buffer.toString()
+        if (full.length <= limit) {
+            buffer.clear()
+            return full
+        }
+        return full.substring(0, limit).also {
+            buffer.clear()
+            buffer.append(full.substring(limit))
+        }
+    }
+
+    private fun computeStreamCharLimit(bufferSize: Int): Int {
+        return if (bufferSize > HIGH_WATER_CHARS) MAX_CHARS_PER_FRAME_FAST else MAX_CHARS_PER_FRAME
     }
 
     private fun shouldRevealPendingAnswerContent(): Boolean {
@@ -753,7 +797,9 @@ class ChatManager(
         if (existing.isEmpty()) return incoming
         if (incoming.isEmpty()) return existing
         return (existing + incoming).distinctBy {
-            it.url?.trim()?.lowercase()?.ifBlank { null } ?: it.source.trim().lowercase()
+            it.document_id?.trim()?.lowercase()?.ifBlank { null }
+                ?: it.url?.trim()?.lowercase()?.ifBlank { null }
+                ?: it.source.trim().lowercase()
         }
     }
 
@@ -982,8 +1028,12 @@ class ChatManager(
     }
 
     private companion object {
-        private const val STREAM_FRAME_DELAY_MILLIS = 40L
+        private const val STREAM_FRAME_DELAY_MILLIS = 65L
         private const val STREAM_EVENT_BUFFER_CAPACITY = 64
+        private const val MAX_CHARS_PER_FRAME = 4
+        private const val MAX_CHARS_PER_FRAME_FAST = 11
+        private const val HIGH_WATER_CHARS = 64
+        private const val FIRST_FRAME_CHARS = 14
     }
 }
 
@@ -1042,10 +1092,39 @@ private fun V2OrchestrationResult.toAssistantMessage(): Message {
         }
     }.ifBlank { answer }
 
+    val sources = runs
+        .filter { it.agentId == V2AgentId.RAG }
+        .flatMap { run ->
+            run.artifact.orEmpty().v2ArtifactDocumentIds().map { documentId ->
+                SourceDto(
+                    content = run.output.take(700),
+                    source = documentId,
+                    url = null,
+                    type = "knowledge_base",
+                    document_id = documentId,
+                    document_name = documentId
+                )
+            }
+        }
+        .distinctBy { it.document_id ?: it.source }
+
     return Message(
         role = Message.ROLE_ASSISTANT,
         content = content,
+        sources = sources,
         agentName = runs.firstOrNull()?.agentId?.wireName,
         agentResultJson = Gson().toJson(this)
     )
 }
+
+private fun String.v2ArtifactDocumentIds(): List<String> {
+    return v2ArtifactJson()
+        ?.getAsJsonArray("documents")
+        ?.mapNotNull { element ->
+            runCatching { element.asString }.getOrNull()?.takeIf { it.isNotBlank() }
+        }
+        .orEmpty()
+}
+
+private fun SourceDto.isKnowledgeBaseSource(): Boolean =
+    type == "knowledge_base" || !document_id.isNullOrBlank()

@@ -13,6 +13,7 @@ data class ChatStreamRequest(
     val enable_thinking: Boolean = false,
     val return_sources: Boolean? = true,
     val image_base64: String? = null,
+    val image_mime_type: String? = null,
     val history: List<ChatHistoryMessage> = emptyList()
 )
 
@@ -44,6 +45,8 @@ data class SourceDto(
     val type: String = "document",
     val relevance_score: Float? = null,
     val published_date: String? = null,
+    val document_id: String? = null,
+    val document_name: String? = null,
     val images: List<SourceImageDto>? = null
 )
 

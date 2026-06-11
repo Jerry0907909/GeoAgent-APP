@@ -6,6 +6,7 @@ import com.geoagent.data.api.GeoAgentAuthApi
 import com.geoagent.data.api.SiliconFlowEmbeddingClient
 import com.geoagent.data.local.AccountStore
 import com.geoagent.data.local.ApiKeyStore
+import com.geoagent.data.local.AvatarLocalStore
 import com.geoagent.data.local.DocumentStore
 import com.geoagent.data.local.GeoAgentDatabase
 import com.geoagent.data.local.TokenDataStore
@@ -54,6 +55,12 @@ object AppHiltModule {
     fun provideAccountStore(
         @ApplicationContext context: Context
     ): AccountStore = AccountStore(context)
+
+    @Provides
+    @Singleton
+    fun provideAvatarLocalStore(
+        @ApplicationContext context: Context
+    ): AvatarLocalStore = AvatarLocalStore(context)
 
     @Provides
     @Singleton

@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
+    android:fitsSystemWindows="true"
     android:orientation="vertical">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -41,12 +42,52 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="20dp">
-                    <TextView android:id="@+id/tv_user_name"
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:textColor="@color/on_background" android:textSize="20sp" android:textStyle="bold" />
-                    <TextView android:id="@+id/tv_user_email"
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp" android:textColor="@color/text_secondary" android:textSize="14sp" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <FrameLayout
+                            android:id="@+id/layout_profile_avatar_frame"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:background="@drawable/bg_avatar_surface"
+                            android:padding="2dp">
+
+                            <ImageView
+                                android:id="@+id/iv_profile_avatar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_avatar_surface"
+                                android:clipToOutline="true"
+                                android:scaleType="centerCrop" />
+
+                            <TextView
+                                android:id="@+id/tv_profile_avatar_initial"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:textColor="@color/on_primary_soft"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView android:id="@+id/tv_user_name"
+                                android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:textColor="@color/on_background" android:textSize="20sp" android:textStyle="bold" />
+                            <TextView android:id="@+id/tv_user_email"
+                                android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp" android:textColor="@color/text_secondary" android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -43,17 +43,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geoagent.model.SearchSource
+import com.geoagent.model.isKnowledgeBaseSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchSourceCard(
     sources: List<SearchSource>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSourceClick: (SearchSource) -> Unit = {}
 ) {
     if (sources.isEmpty()) return
 
     var showSources by remember { mutableStateOf(false) }
     val colors = searchSourceColors()
+    val sourceKind = sources.sourceKindLabel()
 
     Box(
         modifier = modifier
@@ -75,7 +78,7 @@ fun SearchSourceCard(
                 SourceBadgeRow(count = sources.size.coerceAtMost(4))
                 Spacer(modifier = Modifier.width(9.dp))
                 Text(
-                    text = "${sources.size} 个网页",
+                    text = "${sources.size} 个$sourceKind",
                     color = colors.primaryText,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
@@ -87,7 +90,8 @@ fun SearchSourceCard(
     SearchSourceSheet(
         sources = sources,
         visible = showSources,
-        onDismiss = { showSources = false }
+        onDismiss = { showSources = false },
+        onSourceClick = onSourceClick
     )
 }
 
@@ -96,7 +100,8 @@ fun SearchSourceCard(
 fun SearchSourceSheet(
     sources: List<SearchSource>,
     visible: Boolean,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSourceClick: (SearchSource) -> Unit = {}
 ) {
     if (!visible || sources.isEmpty()) return
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -108,12 +113,16 @@ fun SearchSourceSheet(
         containerColor = colors.sheet,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
-        SourceSheet(sources = sources, colors = colors)
+        SourceSheet(sources = sources, colors = colors, onSourceClick = onSourceClick)
     }
 }
 
 @Composable
-private fun SourceSheet(sources: List<SearchSource>, colors: SearchSourceColors) {
+private fun SourceSheet(
+    sources: List<SearchSource>,
+    colors: SearchSourceColors,
+    onSourceClick: (SearchSource) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -123,27 +132,38 @@ private fun SourceSheet(sources: List<SearchSource>, colors: SearchSourceColors)
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         Text(
-            text = "搜索结果",
+            text = if (sources.all { it.isKnowledgeBaseSource() }) "知识库来源" else "搜索结果",
             color = colors.primaryText,
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 4.dp)
         )
         sources.forEachIndexed { index, source ->
-            SearchSourceRow(index = index + 1, source = source, colors = colors)
+            SearchSourceRow(index = index + 1, source = source, colors = colors, onSourceClick = onSourceClick)
         }
         Spacer(modifier = Modifier.height(18.dp))
     }
 }
 
 @Composable
-private fun SearchSourceRow(index: Int, source: SearchSource, colors: SearchSourceColors) {
+private fun SearchSourceRow(
+    index: Int,
+    source: SearchSource,
+    colors: SearchSourceColors,
+    onSourceClick: (SearchSource) -> Unit
+) {
     val uriHandler = LocalUriHandler.current
+    val canOpenKnowledgeBase = source.isKnowledgeBaseSource() && !source.documentId.isNullOrBlank()
+    val clickable = canOpenKnowledgeBase || source.url.isNotBlank()
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = source.url.isNotBlank()) {
-                uriHandler.openUri(source.url)
+            .clickable(enabled = clickable) {
+                if (canOpenKnowledgeBase) {
+                    onSourceClick(source)
+                } else if (source.url.isNotBlank()) {
+                    uriHandler.openUri(source.url)
+                }
             }
     ) {
         Row(
@@ -153,7 +173,7 @@ private fun SearchSourceRow(index: Int, source: SearchSource, colors: SearchSour
             SourceIcon(colors)
             Spacer(modifier = Modifier.width(9.dp))
             Text(
-                text = source.url.toDomain(),
+                text = source.sourceLabel(),
                 color = colors.primaryText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
@@ -300,7 +320,14 @@ private fun String.toDomain(): String =
         .removePrefix("http://")
         .substringBefore("/")
 
+private fun List<SearchSource>.sourceKindLabel(): String =
+    if (all { it.isKnowledgeBaseSource() }) "知识库" else "网页"
+
+private fun SearchSource.sourceLabel(): String =
+    if (isKnowledgeBaseSource()) "知识库" else url.toDomain().ifBlank { "网页" }
+
 private fun SearchSource.displayDate(): String {
+    if (isKnowledgeBaseSource()) return "本地文档"
     publishedDate?.normalizeDate()?.let { return it }
     val joined = "$title $content $url"
     val match = Regex("""20\d{2}[-/.年]\d{1,2}(?:[-/.月]\d{1,2})?""").find(joined)?.value

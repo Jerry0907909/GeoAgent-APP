@@ -1,5 +1,6 @@
 package com.geoagent.agent.v2
 
+import com.geoagent.domain.ConversationContextBuilder
 import com.google.gson.JsonParser
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -62,6 +63,7 @@ data class V2RuntimeCalendarArtifact(
 data class V2RuntimeRequest(
     val input: String,
     val imageBase64: String? = null,
+    val imageMimeType: String? = null,
     val history: List<V2RuntimeHistoryMessage> = emptyList()
 )
 
@@ -72,6 +74,14 @@ data class V2RuntimeHistoryMessage(
 
 interface V2RuntimeGateway {
     suspend fun completeWithOneLlm(agentId: V2AgentId, systemPrompt: String, userPrompt: String): Result<String>
+    suspend fun completeWithOneLlmVision(
+        agentId: V2AgentId,
+        systemPrompt: String,
+        userPrompt: String,
+        imageBase64: String,
+        imageMimeType: String = "image/jpeg"
+    ): Result<String> = completeWithOneLlm(agentId, systemPrompt, userPrompt)
+
     suspend fun streamWithOneLlm(
         agentId: V2AgentId,
         systemPrompt: String,
@@ -79,6 +89,22 @@ interface V2RuntimeGateway {
         onContent: suspend (String) -> Unit
     ): Result<String> {
         return completeWithOneLlm(agentId, systemPrompt, userPrompt).onSuccess { onContent(it) }
+    }
+    suspend fun streamWithOneLlmVision(
+        agentId: V2AgentId,
+        systemPrompt: String,
+        userPrompt: String,
+        imageBase64: String,
+        imageMimeType: String = "image/jpeg",
+        onContent: suspend (String) -> Unit
+    ): Result<String> {
+        return completeWithOneLlmVision(
+            agentId,
+            systemPrompt,
+            userPrompt,
+            imageBase64,
+            imageMimeType
+        ).onSuccess { onContent(it) }
     }
     suspend fun search(question: String): Result<V2RuntimeSearchResult>
     suspend fun retrieveRag(question: String, topK: Int = 5, minScore: Float = 0.25f): Result<List<V2RuntimeRagChunk>>
@@ -263,8 +289,13 @@ class V2RuntimeOrchestrator(
             task,
             V2ExecutionContext(
                 originalInput = request.input,
+                contextualInput = ConversationContextBuilder.buildV2ContextQuestion(
+                    question = task.input,
+                    history = request.history
+                ),
                 previousRuns = previousRuns,
                 imageBase64 = request.imageBase64,
+                imageMimeType = request.imageMimeType,
                 history = request.history,
                 onContent = onContent
             )
@@ -365,6 +396,8 @@ private suspend fun V2RuntimeGateway.streamWithMemory(
     question: String,
     systemPrompt: String,
     userPrompt: String,
+    imageBase64: String? = null,
+    imageMimeType: String? = null,
     onContent: suspend (String) -> Unit
 ): Result<String> {
     val memoryContext = recallMemory(question, limit = 4)
@@ -379,12 +412,24 @@ private suspend fun V2RuntimeGateway.streamWithMemory(
     } else {
         "$userPrompt\n\n历史记忆：\n$memoryContext"
     }
-    return streamWithOneLlm(
-        agentId = agentId,
-        systemPrompt = systemPrompt,
-        userPrompt = prompt,
-        onContent = onContent
-    )
+    val image = imageBase64?.takeIf { it.isNotBlank() }
+    return if (image != null) {
+        streamWithOneLlmVision(
+            agentId = agentId,
+            systemPrompt = systemPrompt,
+            userPrompt = prompt,
+            imageBase64 = image,
+            imageMimeType = imageMimeType ?: "image/jpeg",
+            onContent = onContent
+        )
+    } else {
+        streamWithOneLlm(
+            agentId = agentId,
+            systemPrompt = systemPrompt,
+            userPrompt = prompt,
+            onContent = onContent
+        )
+    }
 }
 
 private class V2RuntimeSearchExecutor(
@@ -394,7 +439,7 @@ private class V2RuntimeSearchExecutor(
     override val agentId: V2AgentId = meta.id
 
     override suspend fun execute(task: V2PlanTask, context: V2ExecutionContext): V2AgentExecution {
-        val search = gateway.search(task.input).getOrElse { e ->
+        val search = gateway.search(context.contextualInput).getOrElse { e ->
             return V2AgentExecution(
                 status = V2AgentRunStatus.BLOCKED,
                 summary = "Search Agent failed to retrieve Tavily context.",
@@ -407,9 +452,11 @@ private class V2RuntimeSearchExecutor(
         }
         val answer = gateway.streamWithMemory(
             agentId = agentId,
-            question = task.input,
+            question = context.contextualInput,
             systemPrompt = "你是 GeoAgent Search Agent。基于 Tavily 搜索证据回答，必须保留关键来源链接。",
-            userPrompt = "用户问题：${task.input}\n\n检索增强提示：${search.enhancedPrompt}\n\nTavily 证据：\n$evidence",
+            userPrompt = "用户问题：${context.contextualInput}\n\n检索增强提示：${search.enhancedPrompt}\n\nTavily 证据：\n$evidence",
+            imageBase64 = context.imageBase64,
+            imageMimeType = context.imageMimeType,
             onContent = { chunk -> context.onContent(agentId, chunk) }
         ).getOrElse { e ->
             return V2AgentExecution(
@@ -449,7 +496,7 @@ private class V2RuntimeRagExecutor(
     override val agentId: V2AgentId = meta.id
 
     override suspend fun execute(task: V2PlanTask, context: V2ExecutionContext): V2AgentExecution {
-        val chunks = gateway.retrieveRag(task.input).getOrElse { e ->
+        val chunks = gateway.retrieveRag(context.contextualInput).getOrElse { e ->
             return V2AgentExecution(
                 status = V2AgentRunStatus.BLOCKED,
                 summary = "RAG Agent failed to retrieve local context.",
@@ -471,9 +518,11 @@ private class V2RuntimeRagExecutor(
         }
         val answer = gateway.streamWithMemory(
             agentId = agentId,
-            question = task.input,
+            question = context.contextualInput,
             systemPrompt = "你是 GeoAgent RAG Agent，只能基于给定文档片段回答，并在结尾列出来源。",
-            userPrompt = "问题：${task.input}\n\n文档片段：\n$contextText",
+            userPrompt = "问题：${context.contextualInput}\n\n文档片段：\n$contextText",
+            imageBase64 = context.imageBase64,
+            imageMimeType = context.imageMimeType,
             onContent = { chunk -> context.onContent(agentId, chunk) }
         ).getOrElse { e ->
             return V2AgentExecution(
@@ -508,8 +557,8 @@ private class V2RuntimeResearchExecutor(
     override val agentId: V2AgentId = meta.id
 
     override suspend fun execute(task: V2PlanTask, context: V2ExecutionContext): V2AgentExecution {
-        val search = gateway.search(task.input).getOrNull()
-        val chunks = gateway.retrieveRag(task.input, topK = 4).getOrDefault(emptyList())
+        val search = gateway.search(context.contextualInput).getOrNull()
+        val chunks = gateway.retrieveRag(context.contextualInput, topK = 4).getOrDefault(emptyList())
         val evidence = buildString {
             search?.sources?.take(5)?.forEachIndexed { index, source ->
                 append("Web ${index + 1}: ${source.title}\n${source.content.take(500)}\n\n")
@@ -520,9 +569,11 @@ private class V2RuntimeResearchExecutor(
         }
         val answer = gateway.streamWithMemory(
             agentId = agentId,
-            question = task.input,
+            question = context.contextualInput,
             systemPrompt = "你是 GeoAgent Research Agent，负责把联网资料和本地文档整理为研究分析。",
-            userPrompt = "研究问题：${task.input}\n\n证据：\n${evidence.ifBlank { "暂无外部证据，请基于问题给出研究拆解框架。" }}",
+            userPrompt = "研究问题：${context.contextualInput}\n\n证据：\n${evidence.ifBlank { "暂无外部证据，请基于问题给出研究拆解框架。" }}",
+            imageBase64 = context.imageBase64,
+            imageMimeType = context.imageMimeType,
             onContent = { chunk -> context.onContent(agentId, chunk) }
         ).getOrElse { e ->
             return V2AgentExecution(
@@ -602,9 +653,11 @@ private class V2RuntimeTaskExecutor(
         }
         val plan = gateway.streamWithMemory(
             agentId = agentId,
-            question = task.input,
+            question = context.contextualInput,
             systemPrompt = "你是 GeoAgent Task Agent。把用户请求拆解为可执行待办，输出简短标题和步骤。",
-            userPrompt = task.input,
+            userPrompt = context.contextualInput,
+            imageBase64 = context.imageBase64,
+            imageMimeType = context.imageMimeType,
             onContent = { chunk -> context.onContent(agentId, chunk) }
         ).getOrElse { e ->
             return V2AgentExecution(
@@ -650,9 +703,11 @@ private class V2RuntimeScheduleExecutor(
         val timeWindow = parseV2TimeWindow(task.input, clock)
         val schedule = gateway.streamWithMemory(
             agentId = agentId,
-            question = task.input,
+            question = context.contextualInput,
             systemPrompt = "你是 GeoAgent Schedule Agent。把用户目标安排成时间块计划，并标出可以写入日历的具体事项、开始时间、持续时间和优先级。",
-            userPrompt = task.input,
+            userPrompt = context.contextualInput,
+            imageBase64 = context.imageBase64,
+            imageMimeType = context.imageMimeType,
             onContent = { chunk -> context.onContent(agentId, chunk) }
         ).getOrElse { e ->
             return V2AgentExecution(
@@ -734,7 +789,7 @@ private class V2RuntimeFileExecutor(
                 followUps = listOf("请在文档页上传 PDF、Word、Markdown 或文本文件。")
             )
         }
-        val selected = selectDocumentForInput(docs, task.input)
+        val selected = selectDocumentForInput(docs, context.contextualInput)
         val action = fileActionFor(task.input)
         if (action != V2FileAction.LIST && selected == null) {
             return V2AgentExecution(
@@ -841,7 +896,7 @@ private class V2RuntimePdfExecutor(
             )
         }
         val pdfDocs = docs.filter { it.type.equals("pdf", ignoreCase = true) }
-        val pdf = selectDocumentForInput(pdfDocs, task.input) ?: pdfDocs.firstOrNull()
+        val pdf = selectDocumentForInput(pdfDocs, context.contextualInput) ?: pdfDocs.firstOrNull()
             ?: return V2AgentExecution(
                 status = V2AgentRunStatus.NEEDS_INPUT,
                 summary = "PDF Agent found no parsed PDF document.",
@@ -859,9 +914,11 @@ private class V2RuntimePdfExecutor(
         }
         val answer = gateway.streamWithMemory(
             agentId = agentId,
-            question = task.input,
+            question = context.contextualInput,
             systemPrompt = "你是 GeoAgent PDF Agent。基于已解析 PDF 文本提取重点、结构和可引用结论。",
-            userPrompt = "用户请求：${task.input}\n\nPDF：${pdf.name}\n\n文本：\n${text.take(5000)}",
+            userPrompt = "用户请求：${context.contextualInput}\n\nPDF：${pdf.name}\n\n文本：\n${text.take(5000)}",
+            imageBase64 = context.imageBase64,
+            imageMimeType = context.imageMimeType,
             onContent = { chunk -> context.onContent(agentId, chunk) }
         ).getOrElse { e ->
             return V2AgentExecution(

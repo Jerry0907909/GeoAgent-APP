@@ -43,6 +43,24 @@ class V2ProductionRuntimeGateway(
         )
     }
 
+    override suspend fun completeWithOneLlmVision(
+        agentId: V2AgentId,
+        systemPrompt: String,
+        userPrompt: String,
+        imageBase64: String,
+        imageMimeType: String
+    ): Result<String> {
+        val apiKey = deepseekApiKey()
+            ?: return Result.failure(IllegalStateException("请先设置 DeepSeek API Key"))
+        return deepSeekClient.completeChat(
+            messages = listOf(
+                ChatMessage("system", "$systemPrompt\n\n当前虚拟 Agent：${agentId.wireName}。"),
+                ChatMessage.userWithImage(userPrompt, imageBase64, imageMimeType)
+            ),
+            apiKey = apiKey
+        )
+    }
+
     override suspend fun streamWithOneLlm(
         agentId: V2AgentId,
         systemPrompt: String,
@@ -57,6 +75,42 @@ class V2ProductionRuntimeGateway(
             messages = listOf(
                 ChatMessage("system", "$systemPrompt\n\n当前虚拟 Agent：${agentId.wireName}。"),
                 ChatMessage("user", userPrompt)
+            ),
+            apiKey = apiKey
+        ).collect { event ->
+            when (event) {
+                is ChatEvent.Content -> {
+                    content.append(event.content)
+                    onContent(event.content)
+                }
+                is ChatEvent.Error -> error = event.message
+                is ChatEvent.Thinking -> Unit
+                is ChatEvent.Done,
+                is ChatEvent.Info,
+                is ChatEvent.Sources,
+                is ChatEvent.Status -> Unit
+            }
+        }
+        error?.let { return Result.failure(IllegalStateException(it)) }
+        return Result.success(content.toString())
+    }
+
+    override suspend fun streamWithOneLlmVision(
+        agentId: V2AgentId,
+        systemPrompt: String,
+        userPrompt: String,
+        imageBase64: String,
+        imageMimeType: String,
+        onContent: suspend (String) -> Unit
+    ): Result<String> {
+        val apiKey = deepseekApiKey()
+            ?: return Result.failure(IllegalStateException("请先设置 DeepSeek API Key"))
+        val content = StringBuilder()
+        var error: String? = null
+        deepSeekClient.streamChat(
+            messages = listOf(
+                ChatMessage("system", "$systemPrompt\n\n当前虚拟 Agent：${agentId.wireName}。"),
+                ChatMessage.userWithImage(userPrompt, imageBase64, imageMimeType)
             ),
             apiKey = apiKey
         ).collect { event ->

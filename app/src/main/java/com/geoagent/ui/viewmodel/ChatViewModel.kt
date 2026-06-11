@@ -37,7 +37,11 @@ class ChatViewModel @Inject constructor(
 
     fun setDeepThinkingEnabled(enabled: Boolean) = manager.setDeepThinkingEnabled(enabled)
 
-    fun sendMessage(text: String, imageBase64: String? = null) = manager.sendMessage(text, imageBase64)
+    fun sendMessage(
+        text: String,
+        imageBase64: String? = null,
+        imageMimeType: String? = null
+    ) = manager.sendMessage(text, imageBase64, imageMimeType)
 
     fun setMode(mode: ChatMode) = manager.setMode(mode)
 

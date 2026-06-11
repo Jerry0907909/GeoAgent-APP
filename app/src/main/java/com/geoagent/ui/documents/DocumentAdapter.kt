@@ -13,7 +13,8 @@ import com.geoagent.ui.motion.MotionUtils
 
 class DocumentAdapter(
     private val onOpen: (DocumentDto) -> Unit,
-    private val onDelete: (DocumentDto) -> Unit
+    private val onDelete: (DocumentDto) -> Unit,
+    private val onRename: (DocumentDto) -> Unit
 ) : RecyclerView.Adapter<DocumentAdapter.Holder>() {
 
     private val items = mutableListOf<DocumentDto>()
@@ -37,6 +38,11 @@ class DocumentAdapter(
         holder.itemView.setOnClickListener {
             MotionUtils.press(holder.itemView)
             onOpen(doc)
+        }
+        holder.itemView.setOnLongClickListener {
+            MotionUtils.press(holder.itemView)
+            onRename(doc)
+            true
         }
         holder.delete.setOnClickListener {
             MotionUtils.press(holder.delete)

@@ -1,0 +1,224 @@
+Bubble - Ant Design X
+https://ant-design-x.antgroup.com/components/bubble
+
+<!DOCTYPE html>Bubble - Ant Design X
+
+Ant Design X
+
+2.5.0
+
+中En
+
+Introduction
+
+Overview
+
+Common
+
+Bubble
+
+Conversations
+
+Notification
+2.0.0
+
+Confirmation
+
+Think
+2.0.0
+
+ThoughtChain
+2.0.0
+
+Wake
+
+Welcome
+
+Prompts
+
+Express
+
+Attachments
+
+Sender
+
+Suggestion
+
+Feedback
+
+Actions
+
+CodeHighlighter
+2.1.0
+
+FileCard
+2.0.0
+
+FolderFile Tree
+2.4.0
+
+Mermaid
+2.1.0
+
+Sources
+2.0.0
+
+Others
+
+XProvider
+
+Bubble
+
+A bubble component for chat.
+
+Importimport { Bubble } from "@ant-design/x";
+
+Sourcex/components/bubble
+
+Docs
+Edit this page...
+
+Changelog
+
+When To Use
+
+Often used in chat scenarios.
+
+Examples
+
+Bubble.List Examples
+
+API
+
+Common Props Reference: Common Props
+
+Bubble
+
+AttributeDescriptionTypeDefaultVersion
+
+placementBubble positionstart | endstart-
+
+loadingLoading stateboolean--
+
+loadingRenderCustom loading content renderer() => React.ReactNode--
+
+contentBubble contentContentType--
+
+contentRenderCustom content renderer(content: ContentType, info: InfoType ) => React.ReactNode--
+
+editableEditableboolean | EditableBubbleOptionfalse2.0.0
+
+typingTyping animation effectboolean | BubbleAnimationOption | ((content: ContentType, info: InfoType) => boolean | BubbleAnimationOption)false-
+
+streamingStreaming modebooleanfalse-
+
+variantBubble style variantfilled | outlined | shadow | borderlessfilled-
+
+shapeBubble shapedefault | round | cornerdefault-
+
+footerPlacementFooter slot positionouter-start | outer-end | inner-start | inner-endouter-start2.0.0
+
+headerHeader slotBubbleSlot--
+
+footerFooter slotBubbleSlot--
+
+avatarAvatar slotBubbleSlot--
+
+extraExtra slotBubbleSlot--
+
+onTypingTyping animation callback(rendererContent: string, currentContent: string) => void-2.0.0
+
+onTypingCompleteTyping animation complete callback(content: string) => void--
+
+onEditConfirmEdit confirm callback(content: string) => void-2.0.0
+
+onEditCancelEdit cancel callback() => void-2.0.0
+
+ContentType
+
+Default type
+
+typescript<div class=""><div class=""><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">ContentType</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> React</span><span class="token punctuation">.</span><span class="token plain">ReactNode </span><span class="token operator">|</span><span class="token plain"> AnyObject </span><span class="token operator">|</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token builtin">number</span><span class="token punctuation">;</span></div></div>
+
+Custom type usage
+
+tsx<div class=""><div class=""><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">CustomContentType</span><span class="token plain"> </span><span class="token punctuation">{</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token spread operator">...</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token punctuation">}</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain">
+</span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token operator"><</span><span class="token maybe-class-name">Bubble</span><span class="token operator"><</span><span class="token maybe-class-name">CustomContentType</span><span class="token operator">></span><span class="token plain"> </span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token plain">props</span><span class="token punctuation">}</span><span class="token plain"> </span><span class="token operator">/</span><span class="token operator">></span></div></div>
+
+BubbleSlot
+
+typescript<div class=""><div class=""><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">BubbleSlot</span><span class="token class-name operator"><</span><span class="token class-name">ContentType</span><span class="token class-name operator">></span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> React</span><span class="token punctuation">.</span><span class="token plain">ReactNode</span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token plain">content</span><span class="token operator">:</span><span class="token plain"> ContentType</span><span class="token punctuation">,</span><span class="token plain"> info</span><span class="token operator">:</span><span class="token plain"> InfoType</span><span class="token punctuation">)</span><span class="token plain"> </span><span class="token operator">=></span><span class="token plain"> React</span><span class="token punctuation">.</span><span class="token plain">ReactNode</span><span class="token punctuation">)</span><span class="token punctuation">;</span></div></div>
+
+EditableBubbleOption
+
+typescript<div class=""><div class=""><span class="token keyword">interface</span><span class="token plain"> </span><span class="token class-name">EditableBubbleOption</span><span class="token plain"> </span><span class="token punctuation">{</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token comment">/**</span></div></div><div class=""><div class=""><span class="token comment"> * @description Whether editable</span></div></div><div class=""><div class=""><span class="token comment"> */</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> editing</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> </span><span class="token builtin">boolean</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token comment">/**</span></div></div><div class=""><div class=""><span class="token comment"> * @description OK button</span></div></div><div class=""><div class=""><span class="token comment"> */</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> okText</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> React</span><span class="token punctuation">.</span><span class="token plain">ReactNode</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token comment">/**</span></div></div><div class=""><div class=""><span class="token comment"> * @description Cancel button</span></div></div><div class=""><div class=""><span class="token comment"> */</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> cancelText</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> React</span><span class="token punctuation">.</span><span class="token plain">ReactNode</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token punctuation">}</span></div></div>
+
+BubbleAnimationOption
+
+typescript<div class=""><div class=""><span class="token keyword">interface</span><span class="token plain"> </span><span class="token class-name">BubbleAnimationOption</span><span class="token plain"> </span><span class="token punctuation">{</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token comment">/**</span></div></div><div class=""><div class=""><span class="token comment"> * @description Animation effect type, typewriter, fade-in</span></div></div><div class=""><div class=""><span class="token comment"> * @default 'fade-in'</span></div></div><div class=""><div class=""><span class="token comment"> */</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> effect</span><span class="token operator">:</span><span class="token plain"> </span><span class="token string">'typing'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'fade-in'</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token comment">/**</span></div></div><div class=""><div class=""><span class="token comment"> * @description Content step unit, array format for random interval</span></div></div><div class=""><div class=""><span class="token comment"> * @default 6</span></div></div><div class=""><div class=""><span class="token comment"> */</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> step</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> </span><span class="token builtin">number</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token punctuation">[</span><span class="token builtin">number</span><span class="token punctuation">,</span><span class="token plain"> </span><span class="token builtin">number</span><span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token comment">/**</span></div></div><div class=""><div class=""><span class="token comment"> * @description Animation trigger interval</span></div></div><div class=""><div class=""><span class="token comment"> * @default 100</span></div></div><div class=""><div class=""><span class="token comment"> */</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> interval</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> </span><span class="token builtin">number</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token comment">/**</span></div></div><div class=""><div class=""><span class="token comment"> * @description Whether to keep the common prefix when restarting animation</span></div></div><div class=""><div class=""><span class="token comment"> * @default true</span></div></div><div class=""><div class=""><span class="token comment"> */</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> keepPrefix</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> </span><span class="token builtin">boolean</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token punctuation">}</span></div></div>
+
+streaming
+
+streaming notifies Bubble whether the current content is streaming input. In streaming mode, regardless of whether Bubble input animation is enabled, Bubble will not trigger the onTypingComplete callback until streaming becomes false, even if the current content is fully output. Only when streaming becomes false and the content is fully output will Bubble trigger onTypingComplete. This avoids multiple triggers due to unstable streaming and ensures only one trigger per streaming process.
+
+In this example, you can try to force the streaming flag off:
+
+If you enable input animation and perform slow loading, multiple triggers of onTypingComplete may occur because streaming speed cannot keep up with animation speed.
+
+If you disable input animation, each streaming input will trigger onTypingComplete.
+
+Bubble.List
+
+AttributeDescriptionTypeDefaultVersion
+
+itemsBubble data list, key and role required. When used with X SDK useXChat, you can pass status to help Bubble manage configuration(BubbleProps & { key: string | number, role: string , status: MessageStatus, extraInfo?: AnyObject })[]--
+
+autoScrollAuto-scrollbooleantrue-
+
+roleRole default configurationRoleType--
+
+MessageStatus
+
+typescript<div class=""><div class=""><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">MessageStatus</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> </span><span class="token string">'local'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'loading'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'updating'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'success'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'error'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'abort'</span><span class="token punctuation">;</span></div></div>
+
+InfoType
+
+When used in conjunction with useXChat, key can be used as MessageId,and extraInfo can be used as a custom parameter.
+
+typescript<div class=""><div class=""><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">InfoType</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> </span><span class="token punctuation">{</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> status</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> MessageStatus</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> key</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token builtin">number</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> extraInfo</span><span class="token operator">?</span><span class="token operator">:</span><span class="token plain"> AnyObject</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token punctuation">}</span><span class="token punctuation">;</span></div></div>
+
+RoleType
+
+typescript<div class=""><div class=""><span class="token keyword">export</span><span class="token plain"> </span><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">RoleProps</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> Pick</span><span class="token operator"><</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> BubbleProps</span><span class="token operator"><</span><span class="token builtin">any</span><span class="token operator">></span><span class="token punctuation">,</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'typing'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'variant'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'shape'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'placement'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'rootClassName'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'classNames'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'className'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'styles'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'style'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'loading'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'loadingRender'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'contentRender'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'footerPlacement'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'header'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'footer'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'avatar'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'extra'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'editable'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'onTyping'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'onTypingComplete'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'onEditConfirm'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'onEditCancel'</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token operator">></span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token keyword">export</span><span class="token plain"> </span><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">FuncRoleProps</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> </span><span class="token punctuation">(</span><span class="token plain">data</span><span class="token operator">:</span><span class="token plain"> BubbleItemType</span><span class="token punctuation">)</span><span class="token plain"> </span><span class="token operator">=></span><span class="token plain"> RoleProps</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain">
+</span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token keyword">export</span><span class="token plain"> </span><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">DividerRoleProps</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> Partial</span><span class="token operator"><</span><span class="token plain">DividerBubbleProps</span><span class="token operator">></span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token keyword">export</span><span class="token plain"> </span><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">FuncDividerRoleProps</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> </span><span class="token punctuation">(</span><span class="token plain">data</span><span class="token operator">:</span><span class="token plain"> BubbleItemType</span><span class="token punctuation">)</span><span class="token plain"> </span><span class="token operator">=></span><span class="token plain"> DividerRoleProps</span><span class="token punctuation">;</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain">
+</span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token keyword">export</span><span class="token plain"> </span><span class="token keyword">type</span><span class="token plain"> </span><span class="token class-name">RoleType</span><span class="token plain"> </span><span class="token operator">=</span><span class="token plain"> Partial</span><span class="token operator"><</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token string">'ai'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'system'</span><span class="token plain"> </span><span class="token operator">|</span><span class="token plain"> </span><span class="token string">'user'</span><span class="token punctuation">,</span><span class="token plain"> RoleProps </span><span class="token operator">|</span><span class="token plain"> FuncRoleProps</span><span class="token operator">></span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"></span><span class="token operator">></span><span class="token plain"> </span><span class="token operator">&</span><span class="token plain"> </span><span class="token punctuation">{</span><span class="token plain"> divider</span><span class="token operator">:</span><span class="token plain"> DividerRoleProps </span><span class="token operator">|</span><span class="token plain"> FuncDividerRoleProps </span><span class="token punctuation">}</span><span class="token plain"> </span><span class="token operator">&</span><span class="token plain"> Record</span><span class="token operator"><</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation">,</span><span class="token plain"></span></div></div><div class=""><div class=""><span class="token plain"> RoleProps </span><span class="token operator">|</span><span class="token plain"> FuncRoleProps</span></div></div><div class=""><div class=""><span class="token plain"> </span><span class="token operator">></span><span class="token punctuation">;</span></div></div>
+
+Bubble.List autoScroll Top Alignment
+
+Bubble.List auto-scroll is a simple reverse sorting scheme. In a fixed-height Bubble.List, if the message content is insufficient to fill the height, the content is bottom-aligned. It is recommended not to set a fixed height for Bubble.List, but to set a fixed height for its parent container and use flex layout (display: flex and flex-direction: column). This way, Bubble.List adapts its height and aligns content to the top when content is sparse, as shown in the Bubble List demo.
+
+tsx<div class=""><div class=""><span class="token tag punctuation"><</span><span class="token tag">div</span><span class="token tag"> </span><span class="token tag attr-name">style</span><span class="token tag script language-javascript script-punctuation punctuation">=</span><span class="token tag script language-javascript punctuation">{</span><span class="token tag script language-javascript punctuation">{</span><span class="token tag script language-javascript"> height</span><span class="token tag script language-javascript operator">:</span><span class="token tag script language-javascript"> </span><span class="token tag script language-javascript number">600</span><span class="token tag script language-javascript punctuation">,</span><span class="token tag script language-javascript"> display</span><span class="token tag script language-javascript operator">:</span><span class="token tag script language-javascript"> </span><span class="token tag script language-javascript string">'flex'</span><span class="token tag script language-javascript punctuation">,</span><span class="token tag script language-javascript"> flexDirection</span><span class="token tag script language-javascript operator">:</span><span class="token tag script language-javascript"> </span><span class="token tag script language-javascript string">'column'</span><span class="token tag script language-javascript"> </span><span class="token tag script language-javascript punctuation">}</span><span class="token tag script language-javascript punctuation">}</span><span class="token tag punctuation">></span><span class="token plain-text"></span></div></div><div class=""><div class=""><span class="token plain-text"> </span><span class="token tag punctuation"><</span><span class="token tag class-name">Bubble.List</span><span class="token tag"> </span><span class="token tag attr-name">items</span><span class="token tag script language-javascript script-punctuation punctuation">=</span><span class="token tag script language-javascript punctuation">{</span><span class="token tag script language-javascript">items</span><span class="token tag script language-javascript punctuation">}</span><span class="token tag"> </span><span class="token tag attr-name">autoScroll</span><span class="token tag"> </span><span class="token tag punctuation">/></span><span class="token plain-text"></span></div></div><div class=""><div class=""><span class="token plain-text"></span><span class="token tag punctuation"></</span><span class="token tag">div</span><span class="token tag punctuation">></span></div></div>
+
+If you do not want to use flex layout, you can set max-height for Bubble.List. When content is sparse, the height adapts and aligns to the top.
+
+tsx<div class=""><div class=""><span class="token tag punctuation"><</span><span class="token tag class-name">Bubble.List</span><span class="token tag"> </span><span class="token tag attr-name">items</span><span class="token tag script language-javascript script-punctuation punctuation">=</span><span class="token tag script language-javascript punctuation">{</span><span class="token tag script language-javascript">items</span><span class="token tag script language-javascript punctuation">}</span><span class="token tag"> </span><span class="token tag attr-name">autoScroll</span><span class="token tag"> </span><span class="token tag attr-name">style</span><span class="token tag script language-javascript script-punctuation punctuation">=</span><span class="token tag script language-javascript punctuation">{</span><span class="token tag script language-javascript punctuation">{</span><span class="token tag script language-javascript"> maxHeight</span><span class="token tag script language-javascript operator">:</span><span class="token tag script language-javascript"> </span><span class="token tag script language-javascript number">600</span><span class="token tag script language-javascript"> </span><span class="token tag script language-javascript punctuation">}</span><span class="token tag script language-javascript punctuation">}</span><span class="token tag"> </span><span class="token tag punctuation">/></span></div></div>
+
+Bubble.List role and Custom Bubble
+
+Both the role and items attributes of Bubble.List can be configured for bubbles, where the role configuration is used as the default and can be omitted. item.role is used to specify the bubble role for the data item, which will be matched with Bubble.List.role. The items itself can also be configured with bubble attributes, with higher priority than the role configuration. The final bubble configuration is: { ...role[item.role], ...item }.
+
+Note that semantic configuration in Bubble.List can also style the bubbles, but it has the lowest priority and will be overridden by role or items.
+
+The final configuration priority is: items > role > Bubble.List.styles = Bubble.List.classNames.
+
+Special note: We provide four default fields for role, ai, user, system, divider. Among these, system and divider are reserved fields. If item.role is assigned either of them, Bubble.List will render this bubble data as Bubble.System (role = 'system') or Bubble.Divider (role = 'divider').
+
+Therefore, if you want to customize the rendering of system Bubble or divider Bubble, you should use other names.
+
+Customize the rendering Bubble, you can refer to the rendering method of reference in this example.
+
+Bubble.System
+
+Common Props Reference: Common Props
+
+[… truncated 6365 chars …]

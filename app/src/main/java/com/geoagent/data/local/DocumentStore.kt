@@ -4,7 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.util.UUID
+import java.io.File
+import java.util.Locale
 
 data class LocalDocument(
     val id: String,
@@ -15,8 +16,17 @@ data class LocalDocument(
     val chunkCount: Int = 0
 )
 
+data class LocalDocumentImage(
+    val id: String,
+    val documentId: String,
+    val index: Int,
+    val path: String,
+    val mimeType: String
+)
+
 class DocumentStore(context: Context) {
 
+    private val appContext = context.applicationContext
     private val db = GeoAgentDatabase(context).writableDatabase
     private val gson = Gson()
 
@@ -40,7 +50,12 @@ class DocumentStore(context: Context) {
         return docs
     }
 
-    fun addDocument(doc: LocalDocument, chunks: List<DocumentChunk>, embeddings: List<FloatArray> = emptyList()) {
+    fun addDocument(
+        doc: LocalDocument,
+        chunks: List<DocumentChunk>,
+        embeddings: List<FloatArray> = emptyList(),
+        images: List<ParsedDocumentImage> = emptyList()
+    ) {
         db.beginTransaction()
         try {
             db.insert("documents", null, ContentValues().apply {
@@ -70,6 +85,16 @@ class DocumentStore(context: Context) {
                     put("vector_json", gson.toJson(embeddings[i].toList()))
                 })
             }
+            images.forEachIndexed { index, image ->
+                val stored = persistImage(doc.id, index, image)
+                db.insert("document_images", null, ContentValues().apply {
+                    put("id", stored.id)
+                    put("document_id", stored.documentId)
+                    put("image_index", stored.index)
+                    put("path", stored.path)
+                    put("mime_type", stored.mimeType)
+                })
+            }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
@@ -79,21 +104,35 @@ class DocumentStore(context: Context) {
     fun deleteDocument(docId: String) {
         db.beginTransaction()
         try {
+            val images = getImages(docId)
             db.delete("embeddings", "document_id = ?", arrayOf(docId))
             db.delete("chunks", "document_id = ?", arrayOf(docId))
+            db.delete("document_images", "document_id = ?", arrayOf(docId))
             db.delete("documents", "id = ?", arrayOf(docId))
+            images.forEach { File(it.path).delete() }
+            File(imagesDir(docId).absolutePath).deleteRecursively()
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
     }
 
+    fun renameDocument(docId: String, name: String): Boolean {
+        val rows = db.update("documents", ContentValues().apply {
+            put("name", name)
+        }, "id = ?", arrayOf(docId))
+        return rows > 0
+    }
+
     fun deleteAllDocuments() {
         db.beginTransaction()
         try {
+            val docs = getDocumentsSnapshot()
             db.delete("embeddings", null, null)
             db.delete("chunks", null, null)
+            db.delete("document_images", null, null)
             db.delete("documents", null, null)
+            docs.forEach { File(imagesDir(it.id).absolutePath).deleteRecursively() }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
@@ -156,5 +195,52 @@ class DocumentStore(context: Context) {
             }
         }
         return result
+    }
+
+    fun getImages(docId: String): List<LocalDocumentImage> {
+        val cursor = db.rawQuery(
+            "SELECT id, document_id, image_index, path, mime_type FROM document_images WHERE document_id = ? ORDER BY image_index",
+            arrayOf(docId)
+        )
+        val images = mutableListOf<LocalDocumentImage>()
+        cursor.use {
+            while (it.moveToNext()) {
+                images.add(LocalDocumentImage(
+                    id = it.getString(0),
+                    documentId = it.getString(1),
+                    index = it.getInt(2),
+                    path = it.getString(3),
+                    mimeType = it.getString(4)
+                ))
+            }
+        }
+        return images
+    }
+
+    private fun persistImage(docId: String, index: Int, image: ParsedDocumentImage): LocalDocumentImage {
+        val dir = imagesDir(docId).apply { mkdirs() }
+        val id = "${docId}_img_$index"
+        val target = File(dir, "$id.${image.mimeType.fileExtension()}")
+        target.outputStream().use { it.write(image.bytes) }
+        return LocalDocumentImage(
+            id = id,
+            documentId = docId,
+            index = index,
+            path = target.absolutePath,
+            mimeType = image.mimeType
+        )
+    }
+
+    private fun imagesDir(docId: String): File = File(appContext.filesDir, "document_images/$docId")
+
+    private fun String.fileExtension(): String {
+        return when (lowercase(Locale.ROOT)) {
+            "image/jpeg" -> "jpg"
+            "image/png" -> "png"
+            "image/gif" -> "gif"
+            "image/bmp" -> "bmp"
+            "image/tiff" -> "tiff"
+            else -> "bin"
+        }
     }
 }

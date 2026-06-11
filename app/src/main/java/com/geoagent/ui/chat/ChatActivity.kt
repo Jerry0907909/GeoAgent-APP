@@ -1,6 +1,7 @@
 package com.geoagent.ui.chat
 
 import android.Manifest
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.content.Intent
 import android.graphics.PorterDuff
@@ -60,8 +61,11 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var modeSwitch: DeepSeekModeSwitch
     private lateinit var etMessage: EditText
     private lateinit var btnSend: ImageView
+    private lateinit var pendingImagePreview: View
+    private lateinit var pendingImageView: ImageView
 
     private var pendingImageBase64: String? = null
+    private var pendingImageMimeType: String? = null
     private var syncingSliders = false
     private var lastDisplayedMode: ChatMode? = null
     private var lastHasMessages: Boolean? = null
@@ -87,7 +91,9 @@ class ChatActivity : AppCompatActivity() {
             contentResolver.openInputStream(uri)?.use { input ->
                 val bytes = input.readBytes()
                 pendingImageBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
-                Toast.makeText(this, "图片已选择", Toast.LENGTH_SHORT).show()
+                pendingImageMimeType = contentResolver.getType(uri)?.takeIf { it.startsWith("image/") }
+                pendingImageView.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+                pendingImagePreview.visibility = View.VISIBLE
                 updateSendButtonState()
             }
         }.onFailure {
@@ -111,6 +117,8 @@ class ChatActivity : AppCompatActivity() {
         val tvStatus = findViewById<TextView>(R.id.tv_status)
         etMessage = findViewById(R.id.et_message)
         btnSend = findViewById(R.id.btn_send)
+        pendingImagePreview = findViewById(R.id.pending_image_preview)
+        pendingImageView = findViewById(R.id.iv_pending_image)
         val btnModeChat = findViewById<TextView>(R.id.btn_mode_chat)
         val btnModeRag = findViewById<TextView>(R.id.btn_mode_rag)
         val chipWebSearch = findViewById<TextView>(R.id.chip_web_search)
@@ -203,6 +211,10 @@ class ChatActivity : AppCompatActivity() {
             MotionUtils.press(it)
             imagePicker.launch("image/*")
         }
+        findViewById<ImageView>(R.id.btn_remove_pending_image).setOnClickListener {
+            MotionUtils.press(it)
+            clearPendingImage()
+        }
         chipRagSettings.setOnClickListener {
             MotionUtils.press(it)
             val expanded = cardRagSettings.visibility != View.VISIBLE
@@ -232,10 +244,13 @@ class ChatActivity : AppCompatActivity() {
             MotionUtils.press(btnSend)
             userPausedAutoScroll = false
             shouldAutoScrollMessages = true
-            chatManager.sendMessage(text.ifEmpty { "请分析这张图片" }, pendingImageBase64)
+            chatManager.sendMessage(
+                text.ifEmpty { "请分析这张图片" },
+                pendingImageBase64,
+                pendingImageMimeType
+            )
             etMessage.text?.clear()
-            pendingImageBase64 = null
-            updateSendButtonState()
+            clearPendingImage()
         }
 
         findViewById<MaterialButton>(R.id.btn_drawer_documents).setOnClickListener {
@@ -448,6 +463,14 @@ class ChatActivity : AppCompatActivity() {
             tintColor,
             PorterDuff.Mode.SRC_IN
         )
+    }
+
+    private fun clearPendingImage() {
+        pendingImageBase64 = null
+        pendingImageMimeType = null
+        pendingImageView.setImageDrawable(null)
+        pendingImagePreview.visibility = View.GONE
+        updateSendButtonState()
     }
 
     private fun updateSearchChip(chip: TextView, enabled: Boolean) {

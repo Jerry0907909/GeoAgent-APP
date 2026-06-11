@@ -3,12 +3,15 @@ package com.geoagent.ui.settings
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.Window
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -43,6 +46,7 @@ class SettingsActivity : AppCompatActivity() {
     @Inject lateinit var authRepository: AuthRepository
     @Inject lateinit var userPrefsDataStore: UserPrefsDataStore
     @Inject lateinit var settingsRepository: SettingsRepository
+    private var profileInitial: String = "G"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,6 +148,11 @@ class SettingsActivity : AppCompatActivity() {
         loadSettingSummaries()
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadAvatarPreview()
+    }
+
     private fun bindRow(rowId: Int, label: String, value: String? = null, showChevron: Boolean = true, onClick: (() -> Unit)? = null) {
         val row = findViewById<View>(rowId)
         row.findViewById<TextView>(R.id.tv_row_label).text = label
@@ -188,11 +197,44 @@ class SettingsActivity : AppCompatActivity() {
         lifecycleScope.launch {
             authRepository.getMe().fold(
                 onSuccess = { user ->
-                    findViewById<TextView>(R.id.tv_user_name).text = user.full_name?.takeIf { it.isNotBlank() } ?: user.username
+                    val displayName = user.full_name?.takeIf { it.isNotBlank() } ?: user.username
+                    findViewById<TextView>(R.id.tv_user_name).text = displayName
                     findViewById<TextView>(R.id.tv_user_email).text = user.email
+                    profileInitial = displayName.firstInitial()
+                    loadAvatarPreview()
                 },
                 onFailure = { Toast.makeText(this@SettingsActivity, it.message, Toast.LENGTH_SHORT).show() }
             )
+        }
+    }
+
+    private fun loadAvatarPreview() {
+        lifecycleScope.launch {
+            val avatarFrame = findViewById<FrameLayout>(R.id.layout_profile_avatar_frame)
+            val avatarImage = findViewById<ImageView>(R.id.iv_profile_avatar)
+            val avatarInitial = findViewById<TextView>(R.id.tv_profile_avatar_initial)
+            val sizeDp = userPrefsDataStore.avatarSizeDp.first()
+            val sizePx = dp(sizeDp)
+            avatarFrame.layoutParams = avatarFrame.layoutParams.apply {
+                width = sizePx
+                height = sizePx
+            }
+            avatarInitial.text = profileInitial
+            avatarInitial.textSize = when {
+                sizeDp <= 48 -> 19f
+                sizeDp >= 80 -> 28f
+                else -> 22f
+            }
+            val avatarUri = userPrefsDataStore.localAvatarUri.first()?.takeIf { it.isNotBlank() }
+            if (avatarUri == null) {
+                avatarImage.setImageDrawable(null)
+                avatarImage.visibility = View.INVISIBLE
+                avatarInitial.visibility = View.VISIBLE
+            } else {
+                avatarImage.setImageURI(Uri.parse(avatarUri))
+                avatarImage.visibility = View.VISIBLE
+                avatarInitial.visibility = View.GONE
+            }
         }
     }
 
@@ -509,6 +551,9 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    private fun String.firstInitial(): String =
+        trim().firstOrNull()?.uppercaseChar()?.toString() ?: "G"
 
     private data class InstructionPreset(
         val name: String,

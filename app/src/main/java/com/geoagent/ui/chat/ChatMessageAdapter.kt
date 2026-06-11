@@ -1,10 +1,12 @@
 package com.geoagent.ui.chat
 
+import android.app.Activity
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.text.SpannableString
@@ -28,6 +30,9 @@ import com.geoagent.R
 import com.geoagent.data.api.dto.SourceDto
 import com.geoagent.domain.model.Message
 import com.geoagent.model.SearchSource
+import com.geoagent.model.isKnowledgeBaseSource
+import com.geoagent.ui.TransitionHelper
+import com.geoagent.ui.documents.DocumentDetailActivity
 import com.geoagent.ui.search.SearchSourceCard
 import com.geoagent.ui.search.SearchSourceSheet
 import com.geoagent.ui.motion.MotionTokens
@@ -55,6 +60,8 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
+    private var lastStreamingThinkingHash: Int = 0
+
     fun submit(
         messages: List<Message>,
         markwon: Markwon,
@@ -72,7 +79,8 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             oldStreamingResponse == isStreamingResponse &&
             oldMessages.size == messages.size &&
             oldMessages.dropLast(1) == messages.dropLast(1) &&
-            oldMessages.lastOrNull() != messages.lastOrNull()
+            oldMessages.lastOrNull() != messages.lastOrNull() &&
+            oldMessages.lastOrNull()?.sources == messages.lastOrNull()?.sources
 
         val onlyStreamingStateChanged = oldMessages == messages &&
             oldLoadingText == loadingText &&
@@ -82,13 +90,18 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         this.isStreamingResponse = isStreamingResponse
 
         if (streamingLastMessageOnly && messages.isNotEmpty()) {
+            val newMsg = messages.last()
+            val newThinkingHash = newMsg.thinkingContent.hashCode() + newMsg.thinkingStartedAt.hashCode() + newMsg.thinkingFinishedAt.hashCode()
+            val thinkingUnchanged = newThinkingHash == lastStreamingThinkingHash
+            lastStreamingThinkingHash = newThinkingHash
             items.clear()
             items.addAll(messages)
-            notifyItemChanged(messages.lastIndex, PAYLOAD_CONTENT)
+            notifyItemChanged(messages.lastIndex, if (thinkingUnchanged) PAYLOAD_CONTENT_ONLY else PAYLOAD_CONTENT)
         } else if (onlyStreamingStateChanged) {
             val activeIndex = items.indexOfLast { it.role == Message.ROLE_ASSISTANT }
             if (activeIndex >= 0) notifyItemChanged(activeIndex, PAYLOAD_CONTENT)
         } else {
+            lastStreamingThinkingHash = 0
             val diff = DiffUtil.calculateDiff(MessageDiff(oldMessages, messages, oldLoadingText, loadingText))
             items.clear()
             items.addAll(messages)
@@ -141,7 +154,15 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         position: Int,
         payloads: MutableList<Any>
     ) {
-        if (payloads.contains(PAYLOAD_CONTENT) && position < items.size) {
+        if (payloads.contains(PAYLOAD_CONTENT_ONLY) && position < items.size && holder is AssistantHolder) {
+            holder.itemView.animate().cancel()
+            holder.itemView.translationY = 0f
+            holder.itemView.alpha = 1f
+            val message = items[position]
+            if (!message.isEmptyAssistantPlaceholder()) {
+                renderStreamingMarkdown(holder.content, message.content)
+            }
+        } else if (payloads.contains(PAYLOAD_CONTENT) && position < items.size) {
             bindContentUpdate(holder, position, items[position])
         } else {
             super.onBindViewHolder(holder, position, payloads)
@@ -202,13 +223,15 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 title = it.source,
                 url = it.url.orEmpty(),
                 content = it.content,
-                publishedDate = it.published_date
+                publishedDate = it.published_date,
+                type = it.type,
+                documentId = it.document_id
             )
         }
         if (streaming && sources.isEmpty()) {
             holder.content.movementMethod = null
             holder.content.linksClickable = false
-            setIncrementalText(holder.content, message.content)
+            renderStreamingMarkdown(holder.content, message.content)
             holder.sourcesView.visibility = View.GONE
             return
         }
@@ -217,8 +240,8 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             markwon?.setMarkdown(holder.content, content) ?: run {
                 holder.content.text = content
             }
-            holder.content.text = buildReferenceClickableText(holder.content.text, sources) { source ->
-                sourceSheetRequest = SourceSheetRequest(message.timestamp, listOf(source))
+            holder.content.text = buildReferenceClickableText(holder.content.text, sources) { clickedSources ->
+                sourceSheetRequest = SourceSheetRequest(message.timestamp, clickedSources)
                 notifyAssistantChanged(holder)
             }
             holder.content.movementMethod = ReferenceClickMovementMethod
@@ -234,10 +257,14 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             holder.sourcesView.visibility = View.VISIBLE
             holder.sourcesView.setContent {
                 val request = sourceSheetRequest
-                SearchSourceCard(sources = sources)
+                SearchSourceCard(
+                    sources = sources,
+                    onSourceClick = { source -> openSource(holder.itemView, source) }
+                )
                 SearchSourceSheet(
                     sources = request?.sources.orEmpty(),
                     visible = request?.messageTimestamp == message.timestamp,
+                    onSourceClick = { source -> openSource(holder.itemView, source) },
                     onDismiss = {
                         if (sourceSheetRequest?.messageTimestamp == message.timestamp) {
                             sourceSheetRequest = null
@@ -251,11 +278,43 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
+    private fun openSource(anchor: View, source: SearchSource) {
+        if (source.isKnowledgeBaseSource()) {
+            openDocumentSource(anchor, source)
+        }
+    }
+
+    private fun openDocumentSource(anchor: View, source: SearchSource) {
+        val documentId = source.documentId?.takeIf { it.isNotBlank() } ?: return
+        val context = anchor.context
+        context.startActivity(
+            Intent(context, DocumentDetailActivity::class.java)
+                .putExtra(DocumentDetailActivity.EXTRA_DOCUMENT_ID, documentId)
+                .putExtra(DocumentDetailActivity.EXTRA_SOURCE, source.title)
+                .putExtra(DocumentDetailActivity.EXTRA_COLLECTION, "local")
+        )
+        (context as? Activity)?.let { TransitionHelper.forward(it) }
+    }
+
     private fun isStreamingMessage(position: Int, message: Message): Boolean =
         isStreamingResponse &&
             position == items.indexOfLast { it.role == Message.ROLE_ASSISTANT } &&
             message.role == Message.ROLE_ASSISTANT &&
             message.sources.isEmpty()
+
+    private var lastMarkwonRenderMs: Long = 0
+
+    private fun renderStreamingMarkdown(view: TextView, content: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastMarkwonRenderMs < MARKWON_RENDER_INTERVAL_MS) return
+        lastMarkwonRenderMs = now
+        val markwon = this.markwon
+        if (markwon != null) {
+            markwon.setMarkdown(view, content)
+        } else {
+            view.text = content
+        }
+    }
 
     private fun setIncrementalText(view: TextView, value: String) {
         val current = view.text?.toString().orEmpty()
@@ -269,10 +328,7 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private fun ensureReferenceMarker(content: String, sources: List<SearchSource>): String {
         if (content.isBlank() || sources.isEmpty()) return content
-        val hasReference = Regex("""(?:\[(\d+)]|【(\d+)】|［(\d+)］)""")
-            .findAll(content)
-            .mapNotNull { match -> match.groupValues.drop(1).firstOrNull { it.isNotBlank() }?.toIntOrNull() }
-            .any { it in 1..sources.size }
+        val hasReference = referenceRegex().containsMatchIn(content)
         return if (hasReference) content else "$content [1]"
     }
 
@@ -288,14 +344,18 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private fun buildReferenceClickableText(
         content: CharSequence,
         sources: List<SearchSource>,
-        onSourceClick: (SearchSource) -> Unit
+        onSourceClick: (List<SearchSource>) -> Unit
     ): SpannableString {
         val text = content.toString()
         val spannable = SpannableString(content)
-        Regex("""\[(\d+)]|【(\d+)】|［(\d+)］""").findAll(text).forEach { match ->
-            val number = match.groupValues.drop(1).firstOrNull { it.isNotBlank() }
-            val sourceIndex = number?.toIntOrNull()?.minus(1) ?: return@forEach
-            if (sourceIndex !in sources.indices) return@forEach
+        referenceRegex().findAll(text).forEach { match ->
+            val clickedSources = if (match.value.isSourceWordReference()) {
+                sources
+            } else {
+                val number = match.groupValues.drop(1).firstOrNull { it.isNotBlank() }
+                val sourceIndex = number?.toIntOrNull()?.minus(1) ?: return@forEach
+                sources.getOrNull(sourceIndex)?.let { listOf(it) } ?: sources
+            }
             spannable.setSpan(
                 ReferenceBadgeSpan(),
                 match.range.first,
@@ -305,7 +365,7 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             spannable.setSpan(
                 object : ClickableSpan() {
                     override fun onClick(widget: View) {
-                        onSourceClick(sources[sourceIndex])
+                        onSourceClick(clickedSources)
                     }
 
                     override fun updateDrawState(ds: TextPaint) {
@@ -321,12 +381,15 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         return spannable
     }
 
+    private fun referenceRegex(): Regex =
+        Regex("""\[(\d+)]|【(\d+)】|［(\d+)］|【\s*来源\s*】|\[\s*来源\s*]""")
+
+    private fun String.isSourceWordReference(): Boolean =
+        contains("来源")
+
     private class ReferenceBadgeSpan : ReplacementSpan() {
-        private val badgeSizePx = 22f
-        private val gapPx = 5f
         private val backgroundColor = Color.rgb(244, 245, 247)
         private val iconColor = Color.rgb(137, 143, 153)
-        private val iconText = "↗"
 
         override fun getSize(
             paint: Paint,
@@ -335,7 +398,17 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             end: Int,
             fm: Paint.FontMetricsInt?
         ): Int {
-            return (badgeSizePx + gapPx).toInt()
+            val badgeSizePx = badgeSizePx(paint)
+            if (fm != null) {
+                val original = paint.fontMetricsInt
+                val center = (original.ascent + original.descent) / 2
+                val half = (badgeSizePx / 2f + 0.5f).toInt()
+                fm.ascent = minOf(original.ascent, center - half)
+                fm.descent = maxOf(original.descent, center + half)
+                fm.top = minOf(original.top, fm.ascent)
+                fm.bottom = maxOf(original.bottom, fm.descent)
+            }
+            return (badgeSizePx + gapPx(paint) + 0.5f).toInt()
         }
 
         override fun draw(
@@ -349,9 +422,12 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             bottom: Int,
             paint: Paint
         ) {
+            val badgeSizePx = badgeSizePx(paint)
             val oldColor = paint.color
             val oldStyle = paint.style
             val oldTextSize = paint.textSize
+            val oldStrokeWidth = paint.strokeWidth
+            val oldStrokeCap = paint.strokeCap
             val fontMetrics = paint.fontMetrics
             val centerY = y + (fontMetrics.ascent + fontMetrics.descent) / 2f
             val rect = RectF(
@@ -365,16 +441,49 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             paint.color = backgroundColor
             canvas.drawOval(rect, paint)
 
+            val strokeWidth = badgeSizePx * 0.066f
+            val linkWidth = badgeSizePx * 0.33f
+            val linkHeight = badgeSizePx * 0.20f
+            val linkRadius = linkHeight / 2f
+            val firstLink = RectF(
+                rect.centerX() - badgeSizePx * 0.29f,
+                rect.centerY() - linkHeight / 2f,
+                rect.centerX() - badgeSizePx * 0.29f + linkWidth,
+                rect.centerY() + linkHeight / 2f
+            )
+            val secondLink = RectF(
+                rect.centerX() - badgeSizePx * 0.06f,
+                rect.centerY() - linkHeight / 2f,
+                rect.centerX() - badgeSizePx * 0.06f + linkWidth,
+                rect.centerY() + linkHeight / 2f
+            )
+
             paint.color = iconColor
-            paint.textSize = oldTextSize * 0.72f
-            paint.textAlign = Paint.Align.CENTER
-            val iconY = centerY - (paint.descent() + paint.ascent()) / 2f
-            canvas.drawText(iconText, rect.centerX(), iconY, paint)
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = strokeWidth
+            paint.strokeCap = Paint.Cap.ROUND
+            canvas.save()
+            canvas.rotate(-35f, rect.centerX(), rect.centerY())
+            canvas.drawRoundRect(firstLink, linkRadius, linkRadius, paint)
+            canvas.drawRoundRect(secondLink, linkRadius, linkRadius, paint)
+            canvas.restore()
 
             paint.color = oldColor
             paint.style = oldStyle
             paint.textSize = oldTextSize
+            paint.strokeWidth = oldStrokeWidth
+            paint.strokeCap = oldStrokeCap
             paint.textAlign = Paint.Align.LEFT
+        }
+
+        private fun badgeSizePx(paint: Paint): Float {
+            val density = (paint as? TextPaint)?.density?.takeIf { it > 0f } ?: 1f
+            return maxOf(20f * density, paint.textSize * 0.95f)
+        }
+
+        private fun gapPx(paint: Paint): Float {
+            val density = (paint as? TextPaint)?.density?.takeIf { it > 0f } ?: 1f
+            return 4f * density
         }
     }
 
@@ -445,9 +554,18 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             val line = layout.getLineForVertical(y)
             if (x < layout.getLineLeft(line) || x > layout.getLineRight(line)) return null
             val offset = layout.getOffsetForHorizontal(line, x.toFloat())
-            val safeStart = offset.coerceIn(0, text.length - 1)
-            val links = text.getSpans(safeStart, safeStart + 1, ClickableSpan::class.java)
-            return links.firstOrNull()
+            return findClickableSpanNear(text, offset)
+        }
+
+        private fun findClickableSpanNear(text: android.text.Spannable, offset: Int): ClickableSpan? {
+            if (text.isEmpty()) return null
+            val candidates = intArrayOf(offset, offset - 1, offset + 1)
+            for (candidate in candidates) {
+                val safeStart = candidate.coerceIn(0, text.length - 1)
+                val links = text.getSpans(safeStart, safeStart + 1, ClickableSpan::class.java)
+                if (links.isNotEmpty()) return links.first()
+            }
+            return null
         }
     }
 
@@ -722,7 +840,9 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private const val TYPE_ASSISTANT = 2
         private const val TYPE_LOADING = 3
         private const val PAYLOAD_CONTENT = "content"
+        private const val PAYLOAD_CONTENT_ONLY = "content_only"
         private const val THINKING_TIMER_INTERVAL_MILLIS = 1_000L
+        private const val MARKWON_RENDER_INTERVAL_MS = 60L
     }
 
 }

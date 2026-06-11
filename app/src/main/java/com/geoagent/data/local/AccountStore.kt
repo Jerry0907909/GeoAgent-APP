@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.database.sqlite.SQLiteConstraintException
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
@@ -98,4 +99,24 @@ class AccountStore(context: Context) {
     }
 
     fun getUser(email: String): StoredUser? = getUserByEmail(email)
+
+    fun updateUsername(email: String, username: String): Boolean {
+        val normalizedEmail = email.trim()
+        val normalizedUsername = username.trim()
+        val existing = getUserByUsername(normalizedUsername)
+        if (existing != null && !existing.email.equals(normalizedEmail, ignoreCase = true)) {
+            throw SQLiteConstraintException("该用户名已存在")
+        }
+        val rows = db.update("users", ContentValues().apply {
+            put("username", normalizedUsername)
+        }, "email = ?", arrayOf(normalizedEmail))
+        return rows > 0
+    }
+
+    fun updatePassword(email: String, passwordHash: String): Boolean {
+        val rows = db.update("users", ContentValues().apply {
+            put("password_hash", passwordHash)
+        }, "email = ?", arrayOf(email.trim()))
+        return rows > 0
+    }
 }

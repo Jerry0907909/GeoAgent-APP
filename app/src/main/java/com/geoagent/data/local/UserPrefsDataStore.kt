@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,10 @@ class UserPrefsDataStore(private val context: Context) {
 
     val localAvatarUri: Flow<String?> = context.userPrefsDataStore.data.map { prefs ->
         prefs[KEY_AVATAR_URI]
+    }
+
+    val avatarSizeDp: Flow<Int> = context.userPrefsDataStore.data.map { prefs ->
+        prefs[KEY_AVATAR_SIZE_DP] ?: DEFAULT_AVATAR_SIZE_DP
     }
 
     val dataImproveEnabled: Flow<Boolean> = context.userPrefsDataStore.data.map { prefs ->
@@ -86,6 +91,12 @@ class UserPrefsDataStore(private val context: Context) {
         }
     }
 
+    suspend fun setAvatarSizeDp(sizeDp: Int) {
+        context.userPrefsDataStore.edit {
+            it[KEY_AVATAR_SIZE_DP] = sizeDp.coerceIn(MIN_AVATAR_SIZE_DP, MAX_AVATAR_SIZE_DP)
+        }
+    }
+
     suspend fun clearUserDataPreferences() {
         context.userPrefsDataStore.edit {
             val theme = it[KEY_THEME]
@@ -97,11 +108,16 @@ class UserPrefsDataStore(private val context: Context) {
     companion object {
         private val KEY_THEME = stringPreferencesKey("theme_mode")
         private val KEY_AVATAR_URI = stringPreferencesKey("local_avatar_uri")
+        private val KEY_AVATAR_SIZE_DP = intPreferencesKey("avatar_size_dp")
         private val KEY_DATA_IMPROVE = booleanPreferencesKey("data_improve_enabled")
         private val KEY_INCOGNITO = booleanPreferencesKey("incognito_enabled")
         private val KEY_MEMORY = booleanPreferencesKey("memory_enabled")
         private val KEY_PUSH = booleanPreferencesKey("push_enabled")
         private val KEY_EMAIL_ALERTS = booleanPreferencesKey("email_alerts_enabled")
         private val KEY_CUSTOM_INSTRUCTION = stringPreferencesKey("custom_instruction")
+
+        const val DEFAULT_AVATAR_SIZE_DP = 64
+        const val MIN_AVATAR_SIZE_DP = 48
+        const val MAX_AVATAR_SIZE_DP = 88
     }
 }

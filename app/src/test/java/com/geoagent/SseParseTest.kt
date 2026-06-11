@@ -67,6 +67,18 @@ class SseParseTest {
     }
 
     @Test
+    fun `parse knowledge base source document id`() {
+        val json = """{"type":"sources","sources":[{"content":"doc chunk","source":"report.docx","type":"knowledge_base","document_id":"doc-1","document_name":"report.docx"}]}"""
+        val event = parseChatEvent(json)
+
+        assertTrue(event is ChatEvent.Sources)
+        val source = (event as ChatEvent.Sources).sources.single()
+        assertEquals("knowledge_base", source.type)
+        assertEquals("doc-1", source.document_id)
+        assertEquals("report.docx", source.document_name)
+    }
+
+    @Test
     fun `parse search plan event`() {
         val event = parseSearchEvent("""{"type":"plan","queries":["q1","q2"]}""")
         assertTrue(event is SearchEvent.Plan)

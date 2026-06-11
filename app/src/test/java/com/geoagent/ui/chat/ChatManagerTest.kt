@@ -29,6 +29,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -75,6 +76,111 @@ class ChatManagerTest {
         assertEquals("综合回答 [1]", assistant.content)
         assertEquals(1, assistant.sources.size)
         assertFalse(manager.uiState.value.isLoading)
+    }
+
+    @Test
+    fun ragKnowledgeBaseSourcesKeepDocumentIdentityAfterDone() = runBlocking {
+        val sourcesEmitted = CompletableDeferred<Unit>()
+        val finishStream = CompletableDeferred<Unit>()
+        val repository = FakeChatRepository(
+            events = flow {
+                emit(
+                    ChatEvent.Sources(
+                        listOf(
+                            SourceDto(
+                                content = "文档片段",
+                                source = "report.docx",
+                                type = "knowledge_base",
+                                document_id = "doc-1",
+                                document_name = "report.docx"
+                            )
+                        )
+                    )
+                )
+                sourcesEmitted.complete(Unit)
+                finishStream.await()
+                emit(ChatEvent.Content("知识库回答 [1]"))
+                emit(ChatEvent.Done())
+            }
+        )
+        val manager = ChatManager(
+            scope = this,
+            chatRepository = repository,
+            authRepository = FakeAuthRepository(),
+            v2Orchestrator = V2Orchestrator(),
+            v2RuntimeOrchestrator = emptyRuntimeOrchestrator()
+        )
+
+        manager.setMode(com.geoagent.domain.model.ChatMode.RAG)
+        manager.sendMessage("校区里有哪些学生社团")
+        withTimeout(1_000L) {
+            sourcesEmitted.await()
+        }
+
+        val beforeDone = manager.uiState.value.messages.last { it.role == Message.ROLE_ASSISTANT }
+        assertEquals("doc-1", beforeDone.sources.single().document_id)
+        assertEquals("knowledge_base", beforeDone.sources.single().type)
+
+        finishStream.complete(Unit)
+        coroutineContext[Job]?.children?.toList().orEmpty().forEach { it.join() }
+
+        val assistant = manager.uiState.value.messages.last { it.role == Message.ROLE_ASSISTANT }
+        assertEquals("rag", repository.streamRequests.single().mode)
+        assertEquals("知识库回答 [1]", assistant.content)
+        assertEquals("knowledge_base", assistant.sources.single().type)
+        assertEquals("doc-1", assistant.sources.single().document_id)
+        assertEquals("report.docx", assistant.sources.single().source)
+    }
+
+    @Test
+    fun ragKnowledgeBaseSourcesAttachBeforeDoneForSourcePill() = runBlocking {
+        val sourcesEmitted = CompletableDeferred<Unit>()
+        val finishStream = CompletableDeferred<Unit>()
+        val repository = FakeChatRepository(
+            events = flow {
+                emit(ChatEvent.Content("知识库回答 [1]"))
+                emit(
+                    ChatEvent.Sources(
+                        listOf(
+                            SourceDto(
+                                content = "文档片段",
+                                source = "report.docx",
+                                type = "knowledge_base",
+                                document_id = "doc-1",
+                                document_name = "report.docx"
+                            )
+                        )
+                    )
+                )
+                sourcesEmitted.complete(Unit)
+                finishStream.await()
+                emit(ChatEvent.Done())
+            }
+        )
+        val manager = ChatManager(
+            scope = this,
+            chatRepository = repository,
+            authRepository = FakeAuthRepository(),
+            v2Orchestrator = V2Orchestrator(),
+            v2RuntimeOrchestrator = emptyRuntimeOrchestrator()
+        )
+
+        manager.setMode(com.geoagent.domain.model.ChatMode.RAG)
+        manager.sendMessage("根据知识库回答")
+        withTimeout(1_000L) {
+            sourcesEmitted.await()
+        }
+
+        val assistantBeforeDone = manager.uiState.value.messages.last { it.role == Message.ROLE_ASSISTANT }
+        assertEquals("doc-1", assistantBeforeDone.sources.single().document_id)
+        assertEquals("knowledge_base", assistantBeforeDone.sources.single().type)
+
+        finishStream.complete(Unit)
+        coroutineContext[Job]?.children?.toList().orEmpty().forEach { it.join() }
+
+        val assistantAfterDone = manager.uiState.value.messages.last { it.role == Message.ROLE_ASSISTANT }
+        assertEquals(1, assistantAfterDone.sources.size)
+        assertEquals("doc-1", assistantAfterDone.sources.single().document_id)
     }
 
     @Test
@@ -146,6 +252,36 @@ class ChatManagerTest {
 
         val request = repository.streamRequests.single()
         assertFalse(request.history.any { it.role == Message.ROLE_USER && it.content == "你好" })
+    }
+
+    @Test
+    fun webSearchRequestKeepsPreviousQaInSameConversationHistory() = runBlocking {
+        val repository = FakeChatRepository(
+            events = flow {
+                emit(ChatEvent.Content("回答"))
+                emit(ChatEvent.Done())
+            }
+        )
+        val manager = ChatManager(
+            scope = this,
+            chatRepository = repository,
+            authRepository = FakeAuthRepository(),
+            v2Orchestrator = V2Orchestrator(),
+            v2RuntimeOrchestrator = emptyRuntimeOrchestrator()
+        )
+
+        manager.sendMessage("这是什么")
+        coroutineContext[Job]?.children?.toList().orEmpty().forEach { it.join() }
+
+        manager.setWebSearchEnabled(true)
+        manager.sendMessage("最近它有哪些热梗")
+        coroutineContext[Job]?.children?.toList().orEmpty().forEach { it.join() }
+
+        val request = repository.streamRequests.last()
+        assertTrue(request.web_search == true)
+        assertTrue(request.history.any { it.role == Message.ROLE_USER && it.content == "这是什么" })
+        assertTrue(request.history.any { it.role == Message.ROLE_ASSISTANT && it.content == "回答" })
+        assertFalse(request.history.any { it.role == Message.ROLE_USER && it.content == "最近它有哪些热梗" })
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -437,6 +573,7 @@ class ChatManagerTest {
         override suspend fun getMe(): Result<UserResponse> = Result.success(UserResponse())
         override suspend fun updateMe(fullName: String?, avatarUrl: String?): Result<UserResponse> = Result.success(UserResponse())
         override suspend fun changePassword(oldPassword: String, newPassword: String, confirmPassword: String): Result<Unit> = Result.success(Unit)
+        override suspend fun resetPassword(email: String, code: String, newPassword: String, confirmPassword: String): Result<Unit> = Result.success(Unit)
         override suspend fun isLoggedIn(): Boolean = true
         override suspend fun sendEmail(toAddr: String, subject: String, content: String): Result<EmailSendResponse> = Result.success(EmailSendResponse())
         override suspend fun getEmailHistory(limit: Int): Result<EmailHistoryResponse> = Result.success(EmailHistoryResponse())
