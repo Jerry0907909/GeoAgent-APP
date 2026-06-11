@@ -217,10 +217,10 @@ object SearchPromptTools {
         if (isGeologyNewsQuestion(normalized)) {
             return SearchPlan(
                 queries = listOf(
-                    "地质学界 最新 新闻 地球科学 研究进展",
-                    "中国地质调查局 地质 科研 最新进展",
-                    "中国科学院 地球科学 地质 最新 研究",
-                    "地震 火山 矿产 地质灾害 最新 科研 新闻",
+                    "最新 科学 技术 研究进展",
+                    "人工智能 最新 突破 进展",
+                    "全球 科技 新闻 最新 动态",
+                    "科学研究 最新 发现 突破",
                     "geology earth science latest research news"
                 ),
                 maxResultsPerQuery = 4,
@@ -419,11 +419,11 @@ object SearchPromptTools {
     }
 
     private fun isGeologyNewsQuestion(text: String): Boolean {
-        val hasGeology = listOf("地质", "地学", "地球科学", "矿产", "地震", "火山", "地质灾害").any { text.contains(it) } ||
+        val hasScience = listOf("科学", "技术", "研究", "数据", "分析").any { text.contains(it) } ||
             text.contains("geology", ignoreCase = true) ||
             text.contains("earth science", ignoreCase = true)
         val hasNewsIntent = listOf("新闻", "资讯", "消息", "动态", "进展", "最近", "最新").any { text.contains(it) }
-        return hasGeology && hasNewsIntent
+        return hasScience && hasNewsIntent
     }
 
     private fun chineseNewsDomainScore(url: String): Int {

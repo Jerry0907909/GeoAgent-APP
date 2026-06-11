@@ -61,8 +61,6 @@ class ChatViewModel @Inject constructor(
 
     fun clearRetrievalHint() = manager.clearRetrievalHint()
 
-    fun consumePendingNavigation() = manager.consumePendingNavigation()
-
     fun consumePendingSystemAction() = manager.consumePendingSystemAction()
 
     override fun onCleared() {

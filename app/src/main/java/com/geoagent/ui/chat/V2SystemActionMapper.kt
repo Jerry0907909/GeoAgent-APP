@@ -30,7 +30,7 @@ fun V2OrchestrationResult.toV2SystemAction(): V2SystemAction? {
     val artifact = run.artifact.orEmpty()
     return when (artifact.v2ArtifactType()) {
         "calendar" -> V2SystemAction.OpenCalendarInsert(
-            title = artifact.v2ArtifactString("title").ifBlank { "GeoAgent 日程" },
+            title = artifact.v2ArtifactString("title").ifBlank { "GeoScientist 日程" },
             description = run.output,
             timeZone = artifact.v2ArtifactString("timezone").ifBlank { java.util.TimeZone.getDefault().id },
             beginTimeMillis = artifact.v2ArtifactString("begin").toLongOrNull(),
@@ -60,8 +60,8 @@ fun V2OrchestrationResult.toV2SystemAction(): V2SystemAction? {
 }
 
 private fun calendarTitleFor(type: String, fallback: String): String = when (type) {
-    "schedule" -> "GeoAgent 日程安排"
-    "meeting" -> "GeoAgent 会议"
-    "travel" -> "GeoAgent 旅行计划"
+    "schedule" -> "GeoScientist 日程安排"
+    "meeting" -> "GeoScientist 会议"
+    "travel" -> "GeoScientist 旅行计划"
     else -> fallback
 }

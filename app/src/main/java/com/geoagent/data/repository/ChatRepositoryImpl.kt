@@ -182,7 +182,7 @@ class ChatRepositoryImpl(
         return try {
             val apiKey = deepseekApiKey() ?: return Result.failure(Exception("请先设置 API Key"))
             val followUpMessages = listOf(
-                ChatMessage("system", "你是一个地质学助手。生成3个简短的相关追问。只返回JSON数组格式。"),
+                ChatMessage("system", "你是 GeoScientist 智能助手。生成3个简短的相关追问。只返回JSON数组格式。"),
                 ChatMessage("user", "问题: $question\n回答: $answer\n\n请生成3个追问，JSON数组格式：[\"追问1\", \"追问2\", \"追问3\"]")
             )
             var jsonStr = ""
@@ -384,9 +384,8 @@ class ChatRepositoryImpl(
         val user = messages.firstOrNull { it.role == Message.ROLE_USER }?.content.orEmpty()
         val assistant = messages.firstOrNull { it.role == Message.ROLE_ASSISTANT }?.content.orEmpty()
         val base = when {
-            user.contains("新闻") && user.contains("地质") -> "地质新闻速览"
             user.contains("新闻") -> "今日新闻速览"
-            user.contains("文献") || user.contains("资料") -> "文献资料问答"
+            user.contains("文献") || user.contains("资料") || user.contains("文档") -> "文档资料问答"
             user.contains("搜索") || user.contains("联网") -> "联网搜索问答"
             user.contains("图片") || assistant.contains("图片") -> "图片内容分析"
             else -> user
@@ -413,11 +412,11 @@ class ChatRepositoryImpl(
 
         val systemPrompt = buildString {
             if (request.web_search == true) {
-                append("你是中文互联网搜索综合助手，擅长把搜索结果整合为简洁、自然、可读的中文回答。")
+                append("你是 GeoScientist，接入互联网搜索后擅长将搜索结果整合为简洁、自然、可读的中文回答。")
             } else {
-                append("你是一个专业的地质学文献智能助手，擅长回答地质学相关问题。")
+                append("你是 GeoScientist，一个通用智能助手，擅长回答各类问题、提供有价值的见解。回答应准确、有条理且易于理解。")
             }
-            append("请始终使用简体中文输出；如果启用思考模式，思考过程也必须使用简体中文，不要输出英文步骤名、英文解释或英文括注。")
+            append("请始终使用简体中文输出。如果启用思考模式，思考应简洁聚焦（控制在几句话内），直接提炼关键信息并快速得出结论，避免冗长逐条分析。")
             if (request.history.isNotEmpty()) {
                 append(" 当前问题可能引用前文中的对象、主题或结论，必须结合最近对话历史理解代词和省略表达。")
             }

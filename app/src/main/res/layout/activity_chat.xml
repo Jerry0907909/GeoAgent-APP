@@ -448,7 +448,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/spacing_xs"
-                    android:text="地质文献智能问答平台"
+                    android:text="GeoScientist 智能助手"
                     android:textAppearance="@style/TextAppearance.GeoAgent.BodyMedium" />
             </LinearLayout>
 

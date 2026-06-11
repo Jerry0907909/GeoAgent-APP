@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GeoAgent"
+rootProject.name = "GeoScientist"
 include(":app")

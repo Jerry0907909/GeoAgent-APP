@@ -113,9 +113,7 @@ class DeepSeekChatClient(
             "max_tokens" to defaultMaxTokens,
             "enable_thinking" to enableThinking
         )
-        if (enableThinking) {
-            bodyMap["thinking_budget"] = MIN_THINKING_BUDGET
-        }
+
         val requestBody = gson.toJson(bodyMap).toRequestBody(jsonMediaType)
 
         val request = Request.Builder()
@@ -240,7 +238,5 @@ class DeepSeekChatClient(
         return sources
     }
 
-    private companion object {
-        private const val MIN_THINKING_BUDGET = 8192
-    }
+    private companion object
 }

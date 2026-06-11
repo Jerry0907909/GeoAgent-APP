@@ -269,7 +269,7 @@ class SettingsActivity : AppCompatActivity() {
                         putExtra(Intent.EXTRA_SUBJECT, result.file.name)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
-                    startActivity(Intent.createChooser(intent, "分享导出的 GeoAgent 数据"))
+                    startActivity(Intent.createChooser(intent, "分享导出的 GeoScientist 数据"))
                     toast("已生成${result.source}导出文件")
                 },
                 onFailure = { toast(it.message ?: "导出失败") }
@@ -300,9 +300,9 @@ class SettingsActivity : AppCompatActivity() {
             val current = userPrefsDataStore.customInstruction.first()
             val content = LayoutInflater.from(this@SettingsActivity).inflate(R.layout.dialog_settings_text_input, null)
             content.findViewById<TextView>(R.id.tv_dialog_title).text = "自定义指令"
-            content.findViewById<TextView>(R.id.tv_dialog_subtitle).text = "告诉 GeoAgent 你希望它如何回答、称呼你，或优先关注哪些信息。"
+            content.findViewById<TextView>(R.id.tv_dialog_subtitle).text = "告诉 GeoScientist 你希望它如何回答、称呼你，或优先关注哪些信息。"
             val input = content.findViewById<EditText>(R.id.et_settings_text)
-            input.hint = "例如：回答保持简洁，重点解释地质学概念。"
+            input.hint = "例如：回答保持简洁，重点解释关键概念。"
             input.setText(current)
             input.setSelection(input.text.length)
             bindInstructionPresets(content, input)
@@ -393,7 +393,7 @@ class SettingsActivity : AppCompatActivity() {
                             val user = authRepository.getMe().getOrNull()
                             authRepository.sendEmail(
                                 toAddr = recipient,
-                                subject = "GeoAgent 反馈与建议",
+                                subject = "GeoScientist 反馈与建议",
                                 content = buildFeedbackEmailBody(feedback, user?.email)
                             ).fold(
                                 onSuccess = {
@@ -419,7 +419,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun showLicense() {
         showInfoDialog(
             "开源许可",
-            "GeoAgent 使用 AndroidX、Material Components、OkHttp、Retrofit、Room、DataStore、Gson、Coil、Markwon 等开源组件。各组件许可请以其官方仓库为准。"
+            "GeoScientist 使用 AndroidX、Material Components、OkHttp、Retrofit、Room、DataStore、Gson、Coil、Markwon 等开源组件。各组件许可请以其官方仓库为准。"
         )
     }
 
@@ -563,7 +563,7 @@ class SettingsActivity : AppCompatActivity() {
     private val instructionPresets = listOf(
         InstructionPreset(
             "严谨",
-            "请用严谨、准确、可验证的方式回答。优先说明依据和不确定性，避免夸张表述；涉及地质学、文献或数据时，请先给结论，再列出关键依据。"
+            "请用严谨、准确、可验证的方式回答。优先说明依据和不确定性，避免夸张表述；涉及专业领域知识或数据时，请先给结论，再列出关键依据。"
         ),
         InstructionPreset(
             "冷静",

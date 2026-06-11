@@ -407,7 +407,7 @@ private class V2EmailAgentExecutor(
                 ?.getOrNull(1)
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
-                ?: "来自 GeoAgent 的邮件",
+                ?: "来自 GeoScientist 的邮件",
             content = Regex("""(?:内容|正文)\s*(?:[:：]|为|是)\s*(.+)$""", RegexOption.DOT_MATCHES_ALL)
                 .find(task.input)
                 ?.groupValues

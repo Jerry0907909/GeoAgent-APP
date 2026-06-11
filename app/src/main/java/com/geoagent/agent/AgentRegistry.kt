@@ -193,37 +193,6 @@ val DEFAULT_CONTEXT_EXIT_KEYWORDS = setOf(
 
 object BuiltinAgents {
 
-    val DOCUMENT = AgentMeta(
-        name = "document",
-        displayName = "文档管理",
-        description = "上传、查看、删除文档",
-        keywords = setOf("上传", "删除文档", "文档列表", "我的文档", "文件管理", "知识库文件"),
-        regexPatterns = listOf(
-            Regex("""(上传|添加).*(文档|文件|资料)""", RegexOption.IGNORE_CASE),
-            Regex("""(删除|移除).*(文档|文件|资料)""", RegexOption.IGNORE_CASE),
-            Regex("""(查看|打开).*(文档|文件)""", RegexOption.IGNORE_CASE)
-        ),
-        semanticHints = setOf("document", "upload file"),
-        priority = 40,
-        requiresAuth = true,
-        ttlMinutes = 3
-    )
-
-    val SETTINGS = AgentMeta(
-        name = "settings",
-        displayName = "设置助手",
-        description = "主题、密码、账号偏好设置",
-        keywords = setOf("设置", "主题", "密码", "偏好", "账号", "个人资料", "深色模式"),
-        regexPatterns = listOf(
-            Regex("""(打开|进入|去).*(设置|偏好|主题|账号)""", RegexOption.IGNORE_CASE),
-            Regex("""(修改|更改).*(密码|主题|头像|昵称|资料)""", RegexOption.IGNORE_CASE)
-        ),
-        semanticHints = setOf("settings", "preference"),
-        priority = 50,
-        requiresAuth = true,
-        ttlMinutes = 3
-    )
-
     val EMAIL = AgentMeta(
         "v2_email",
         "邮件助手",
@@ -236,8 +205,6 @@ object BuiltinAgents {
         3
     )
 
-    /** Only Email Agent remains available for user-intent chat routing. */
-    val V2_BRIDGED_AGENTS: List<AgentMeta> = listOf(EMAIL)
-
-    val ALL: List<AgentMeta> = V2_BRIDGED_AGENTS
+    /** Email Agent for user-intent chat routing. */
+    val ALL: List<AgentMeta> = listOf(EMAIL)
 }

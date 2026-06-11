@@ -311,20 +311,6 @@ class ChatActivity : AppCompatActivity() {
                     chatManager.clearConversationError()
                 }
 
-                when (state.pendingAgentNavigation) {
-                    AgentNavigationTarget.DOCUMENTS -> {
-                        startActivity(Intent(this@ChatActivity, DocumentListActivity::class.java))
-                        TransitionHelper.forward(this@ChatActivity)
-                        chatManager.consumePendingNavigation()
-                    }
-                    AgentNavigationTarget.SETTINGS -> {
-                        startActivity(Intent(this@ChatActivity, SettingsActivity::class.java))
-                        TransitionHelper.forward(this@ChatActivity)
-                        chatManager.consumePendingNavigation()
-                    }
-                    null -> Unit
-                }
-
                 state.pendingSystemAction?.let { action ->
                     handleV2SystemAction(action)
                     chatManager.consumePendingSystemAction()

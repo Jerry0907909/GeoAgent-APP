@@ -255,7 +255,15 @@ class V2ProductionRuntimeGateway(
     override suspend fun prepareCalendarEvent(
         request: V2CalendarEventRequest
     ): Result<V2RuntimeCalendarArtifact> = runCatching {
-        val intent = V2CalendarContractAdapter.buildInsertIntent(request)
+        val intent = android.content.Intent(android.content.Intent.ACTION_INSERT)
+            .setData(android.provider.CalendarContract.Events.CONTENT_URI)
+            .putExtra(android.provider.CalendarContract.Events.TITLE, request.title)
+            .putExtra(android.provider.CalendarContract.Events.DESCRIPTION, request.description)
+            .putExtra(android.provider.CalendarContract.Events.EVENT_TIMEZONE, request.timeZone)
+            .apply {
+                request.beginTimeMillis?.let { putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, it) }
+                request.endTimeMillis?.let { putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, it) }
+            }
         V2RuntimeCalendarArtifact(
             title = request.title,
             description = request.description,

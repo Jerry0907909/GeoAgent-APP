@@ -453,7 +453,7 @@ private class V2RuntimeSearchExecutor(
         val answer = gateway.streamWithMemory(
             agentId = agentId,
             question = context.contextualInput,
-            systemPrompt = "你是 GeoAgent Search Agent。基于 Tavily 搜索证据回答，必须保留关键来源链接。",
+            systemPrompt = "你是 GeoScientist Search Agent。基于 Tavily 搜索证据回答，必须保留关键来源链接。",
             userPrompt = "用户问题：${context.contextualInput}\n\n检索增强提示：${search.enhancedPrompt}\n\nTavily 证据：\n$evidence",
             imageBase64 = context.imageBase64,
             imageMimeType = context.imageMimeType,
@@ -519,7 +519,7 @@ private class V2RuntimeRagExecutor(
         val answer = gateway.streamWithMemory(
             agentId = agentId,
             question = context.contextualInput,
-            systemPrompt = "你是 GeoAgent RAG Agent，只能基于给定文档片段回答，并在结尾列出来源。",
+            systemPrompt = "你是 GeoScientist RAG Agent，只能基于给定文档片段回答，并在结尾列出来源。",
             userPrompt = "问题：${context.contextualInput}\n\n文档片段：\n$contextText",
             imageBase64 = context.imageBase64,
             imageMimeType = context.imageMimeType,
@@ -570,7 +570,7 @@ private class V2RuntimeResearchExecutor(
         val answer = gateway.streamWithMemory(
             agentId = agentId,
             question = context.contextualInput,
-            systemPrompt = "你是 GeoAgent Research Agent，负责把联网资料和本地文档整理为研究分析。",
+            systemPrompt = "你是 GeoScientist Research Agent，负责把联网资料和本地文档整理为研究分析。",
             userPrompt = "研究问题：${context.contextualInput}\n\n证据：\n${evidence.ifBlank { "暂无外部证据，请基于问题给出研究拆解框架。" }}",
             imageBase64 = context.imageBase64,
             imageMimeType = context.imageMimeType,
@@ -654,7 +654,7 @@ private class V2RuntimeTaskExecutor(
         val plan = gateway.streamWithMemory(
             agentId = agentId,
             question = context.contextualInput,
-            systemPrompt = "你是 GeoAgent Task Agent。把用户请求拆解为可执行待办，输出简短标题和步骤。",
+            systemPrompt = "你是 GeoScientist Task Agent。把用户请求拆解为可执行待办，输出简短标题和步骤。",
             userPrompt = context.contextualInput,
             imageBase64 = context.imageBase64,
             imageMimeType = context.imageMimeType,
@@ -668,7 +668,7 @@ private class V2RuntimeTaskExecutor(
             )
         }
         val record = gateway.saveTask(
-            title = extractRuntimeTitle(task.input, "GeoAgent 任务"),
+            title = extractRuntimeTitle(task.input, "GeoScientist 任务"),
             description = plan,
             sourceAgent = agentId,
             priority = 4,
@@ -704,7 +704,7 @@ private class V2RuntimeScheduleExecutor(
         val schedule = gateway.streamWithMemory(
             agentId = agentId,
             question = context.contextualInput,
-            systemPrompt = "你是 GeoAgent Schedule Agent。把用户目标安排成时间块计划，并标出可以写入日历的具体事项、开始时间、持续时间和优先级。",
+            systemPrompt = "你是 GeoScientist Schedule Agent。把用户目标安排成时间块计划，并标出可以写入日历的具体事项、开始时间、持续时间和优先级。",
             userPrompt = context.contextualInput,
             imageBase64 = context.imageBase64,
             imageMimeType = context.imageMimeType,
@@ -718,7 +718,7 @@ private class V2RuntimeScheduleExecutor(
             )
         }
         val record = gateway.saveTask(
-            title = extractRuntimeTitle(task.input, "GeoAgent 日程安排"),
+            title = extractRuntimeTitle(task.input, "GeoScientist 日程安排"),
             description = schedule,
             sourceAgent = agentId,
             priority = 4,
@@ -734,7 +734,7 @@ private class V2RuntimeScheduleExecutor(
         val calendarArtifact = if (timeWindow != null) {
             gateway.prepareCalendarEvent(
                 V2CalendarEventRequest(
-                    title = extractRuntimeTitle(task.input, "GeoAgent 日程安排"),
+                    title = extractRuntimeTitle(task.input, "GeoScientist 日程安排"),
                     description = schedule,
                     beginTimeMillis = timeWindow.beginMillis,
                     endTimeMillis = timeWindow.endMillis,
@@ -915,7 +915,7 @@ private class V2RuntimePdfExecutor(
         val answer = gateway.streamWithMemory(
             agentId = agentId,
             question = context.contextualInput,
-            systemPrompt = "你是 GeoAgent PDF Agent。基于已解析 PDF 文本提取重点、结构和可引用结论。",
+            systemPrompt = "你是 GeoScientist PDF Agent。基于已解析 PDF 文本提取重点、结构和可引用结论。",
             userPrompt = "用户请求：${context.contextualInput}\n\nPDF：${pdf.name}\n\n文本：\n${text.take(5000)}",
             imageBase64 = context.imageBase64,
             imageMimeType = context.imageMimeType,
@@ -1246,7 +1246,7 @@ private fun buildEmailDecisionPrompt(
         history.takeLast(8).forEachIndexed { index, message ->
             val role = when (message.role) {
                 "user" -> "用户"
-                "assistant" -> "GeoAgent"
+                "assistant" -> "GeoScientist"
                 else -> message.role
             }
             appendLine("${index + 1}. $role：${message.content}")
@@ -1268,7 +1268,7 @@ private fun parseAiEmailDecision(raw: String): V2EmailRequest? {
         if (!to.isValidEmailAddress() || content.isBlank()) return null
         V2EmailRequest(
             to = to,
-            subject = subject.ifBlank { "来自 GeoAgent 的邮件" },
+            subject = subject.ifBlank { "来自 GeoScientist 的邮件" },
             content = content
         )
     }.getOrNull()
@@ -1298,7 +1298,7 @@ private fun parseEmailRequestFallback(
         ?.getOrNull(1)
         ?.trim()
         ?.takeIf { it.isNotBlank() }
-        ?: "来自 GeoAgent 的邮件"
+        ?: "来自 GeoScientist 的邮件"
     val explicitContent = Regex("""(?:内容|正文)\s*(?:[:：]|为|是)\s*(.+)$""", RegexOption.DOT_MATCHES_ALL)
         .find(input)
         ?.groupValues
@@ -1325,7 +1325,7 @@ private fun String.isValidEmailAddress(): Boolean =
     matches(Regex("""^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"""))
 
 private val EMAIL_DECISION_SYSTEM_PROMPT = """
-    你是 GeoAgent 的邮件发送决策器。你的任务不是写闲聊回复，而是根据当前用户指令和最近对话历史，决定即将通过 SMTP 发送的邮件结构。
+    你是 GeoScientist 的邮件发送决策器。你的任务不是写闲聊回复，而是根据当前用户指令和最近对话历史，决定即将通过 SMTP 发送的邮件结构。
 
     只输出 JSON，不要输出 Markdown 或解释。JSON 字段固定为：
     {
@@ -1338,7 +1338,7 @@ private val EMAIL_DECISION_SYSTEM_PROMPT = """
 
     规则：
     1. 邮箱地址必须来自当前用户指令或历史里明确出现的邮箱，不要编造。
-    2. 如果用户说“上述内容、当前内容、这段对话、对话记录、聊天记录、这些内容”等，content 应包含最近一轮相关用户问题和 GeoAgent 回答，格式为“用户：...\n\nGeoAgent：...”。
+    2. 如果用户说“上述内容、当前内容、这段对话、对话记录、聊天记录、这些内容”等，content 应包含最近一轮相关用户问题和 GeoScientist 回答，格式为“用户：...\n\nGeoScientist：...”。
     3. 如果用户是在纠错，例如“发错了，是发给 xxx@qq.com”，通常表示沿用上一封/上一轮要发送的正文，只修正收件人。
     4. 如果用户显式提供“内容/正文”，优先使用显式正文。
     5. 如果缺少可发送正文或缺少有效收件人，needs_input 为 true，to/subject/content 能填多少填多少。
@@ -1380,7 +1380,7 @@ private fun List<V2RuntimeHistoryMessage>.previousConversationTurnContent(): Str
     return if (user.isNullOrBlank()) {
         assistant
     } else {
-        "用户：$user\n\nGeoAgent：$assistant"
+        "用户：$user\n\nGeoScientist：$assistant"
     }
 }
 

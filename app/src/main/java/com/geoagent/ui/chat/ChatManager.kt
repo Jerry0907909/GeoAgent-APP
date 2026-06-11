@@ -61,7 +61,6 @@ data class ChatUiState(
     val activeAgent: String? = null,
     val availableAgents: List<AgentMeta> = BuiltinAgents.ALL,
     val pendingRouteConfirmation: PendingRouteConfirmation? = null,
-    val pendingAgentNavigation: AgentNavigationTarget? = null,
     val pendingSystemAction: V2SystemAction? = null,
     val v2Trace: V2OrchestrationResult? = null
 )
@@ -71,11 +70,6 @@ data class PendingRouteConfirmation(
     val originalInput: String,
     val confidence: Float
 )
-
-enum class AgentNavigationTarget {
-    DOCUMENTS,
-    SETTINGS
-}
 
 data class EmailDraft(
     val to: String,
@@ -105,6 +99,7 @@ class ChatManager(
     private var streamRenderJob: Job? = null
     private var activeAssistantTimestamp: Long? = null
     private var shouldHoldFirstAnswerFrame = false
+    private var lastThinkingActivityMs: Long = 0
     private val pendingStreamContent = StringBuilder()
     private val pendingThinkingContent = StringBuilder()
     private val pendingV2ContentByAgent = linkedMapOf<String, StringBuilder>()
@@ -200,64 +195,7 @@ class ChatManager(
             return
         }
 
-        if (directRoutedAgent != null) {
-            when (directRoutedAgent) {
-                BuiltinAgents.DOCUMENT.name -> {
-                    val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
-                    _uiState.update {
-                        it.copy(
-                            messages = it.messages + userMsg,
-                            pendingRouteConfirmation = null,
-                            isLoading = true,
-                            statusMessage = "正在打开文档管理…"
-                        )
-                    }
-                    scope.launch {
-                        delay(120)
-                        val aiMsg = Message(
-                            role = Message.ROLE_ASSISTANT,
-                            content = "已识别为文档管理需求。请点击左上角菜单进入「文档」页面进行上传、删除或查看。"
-                        )
-                        _uiState.update {
-                            it.copy(
-                                messages = it.messages + aiMsg,
-                                pendingAgentNavigation = AgentNavigationTarget.DOCUMENTS,
-                                isLoading = false,
-                                statusMessage = null
-                            )
-                        }
-                    }
-                    return
-                }
-                BuiltinAgents.SETTINGS.name -> {
-                    val userMsg = Message(role = Message.ROLE_USER, content = text, imageBase64 = imageBase64)
-                    _uiState.update {
-                        it.copy(
-                            messages = it.messages + userMsg,
-                            pendingRouteConfirmation = null,
-                            isLoading = true,
-                            statusMessage = "正在打开设置…"
-                        )
-                    }
-                    scope.launch {
-                        delay(120)
-                        val aiMsg = Message(
-                            role = Message.ROLE_ASSISTANT,
-                            content = "已识别为设置需求。请点击左上角菜单进入「设置」页面进行主题、账号与偏好调整。"
-                        )
-                        _uiState.update {
-                            it.copy(
-                                messages = it.messages + aiMsg,
-                                pendingAgentNavigation = AgentNavigationTarget.SETTINGS,
-                                isLoading = false,
-                                statusMessage = null
-                            )
-                        }
-                    }
-                    return
-                }
-            }
-        }
+
 
         if (directRoutedAgent == null) {
             syncActiveAgent()
@@ -358,7 +296,7 @@ class ChatManager(
                             val hint = if (withSources.currentMode == ChatMode.RAG) {
                                 val assistant = withSources.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
                                 if (assistant != null && assistant.sources.isEmpty()) {
-                                    "未检索到文献来源：请确认已上传文档或联网搜索获取参考资料。"
+                                    "未检索到相关来源：请确认已上传文档或联网搜索获取参考资料。"
                                 } else null
                             } else null
                             val lastAssistant = withSources.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
@@ -493,6 +431,7 @@ class ChatManager(
     private fun stopStreamRenderer() {
         streamRenderJob?.cancel()
         streamRenderJob = null
+        lastThinkingActivityMs = 0
         synchronized(pendingStreamContent) {
             pendingStreamContent.clear()
         }
@@ -536,7 +475,13 @@ class ChatManager(
                 pendingV2ContentByAgent.clear()
             }
         }
-        if (contentChunk.isEmpty() && thinkingChunk.isEmpty() && v2Chunks.isEmpty()) return
+        if (thinkingChunk.isNotEmpty()) {
+            lastThinkingActivityMs = now
+        }
+        if (contentChunk.isEmpty() && thinkingChunk.isEmpty() && v2Chunks.isEmpty()) {
+            maybeFinalizeIdleThinking(now)
+            return
+        }
         _uiState.update { state ->
             val msgs = state.messages.toMutableList()
             if (contentChunk.isNotEmpty() || thinkingChunk.isNotEmpty()) {
@@ -603,6 +548,23 @@ class ChatManager(
         return if (bufferSize > HIGH_WATER_CHARS) MAX_CHARS_PER_FRAME_FAST else MAX_CHARS_PER_FRAME
     }
 
+    private fun maybeFinalizeIdleThinking(now: Long) {
+        if (lastThinkingActivityMs == 0L) return
+        val idleMs = now - lastThinkingActivityMs
+        if (idleMs < THINKING_IDLE_TIMEOUT_MS) return
+        val state = _uiState.value
+        val idx = state.messages.indexOfLast {
+            it.role == Message.ROLE_ASSISTANT && it.thinkingStartedAt != null && it.thinkingFinishedAt == null
+        }
+        if (idx < 0) return
+        val hasContent = state.messages[idx].content.isNotBlank()
+        if (hasContent) return
+        val msgs = state.messages.toMutableList()
+        msgs[idx] = msgs[idx].copy(thinkingFinishedAt = now)
+        _uiState.update { it.copy(messages = msgs, statusMessage = "正在整理回答…") }
+        lastThinkingActivityMs = 0
+    }
+
     private fun shouldRevealPendingAnswerContent(): Boolean {
         val activeThinking = _uiState.value.messages.lastOrNull { it.role == Message.ROLE_ASSISTANT }
             ?.let { it.thinkingStartedAt != null && it.thinkingFinishedAt == null } == true
@@ -646,40 +608,7 @@ class ChatManager(
         if (positive.any { normalized == it || normalized.contains(it) }) {
             val userMsg = Message(role = Message.ROLE_USER, content = text)
             _uiState.update { it.copy(messages = it.messages + userMsg, pendingRouteConfirmation = null) }
-            when (pending.agentName) {
-                BuiltinAgents.DOCUMENT.name -> {
-                    _uiState.update { it.copy(isLoading = true, statusMessage = "正在打开文档管理…") }
-                    scope.launch {
-                        delay(120)
-                        val aiMsg = Message(role = Message.ROLE_ASSISTANT, content = "请点击左上角菜单进入「文档」页面。")
-                        _uiState.update {
-                            it.copy(
-                                messages = it.messages + aiMsg,
-                                pendingAgentNavigation = AgentNavigationTarget.DOCUMENTS,
-                                isLoading = false,
-                                statusMessage = null
-                            )
-                        }
-                    }
-                    return true
-                }
-                BuiltinAgents.SETTINGS.name -> {
-                    _uiState.update { it.copy(isLoading = true, statusMessage = "正在打开设置…") }
-                    scope.launch {
-                        delay(120)
-                        val aiMsg = Message(role = Message.ROLE_ASSISTANT, content = "请点击左上角菜单进入「设置」页面。")
-                        _uiState.update {
-                            it.copy(
-                                messages = it.messages + aiMsg,
-                                pendingAgentNavigation = AgentNavigationTarget.SETTINGS,
-                                isLoading = false,
-                                statusMessage = null
-                            )
-                        }
-                    }
-                    return true
-                }
-            }
+
         }
 
         if (negative.any { normalized == it || normalized.contains(it) }) {
@@ -795,9 +724,7 @@ class ChatManager(
         _uiState.update { it.copy(retrievalHint = null) }
     }
 
-    fun consumePendingNavigation() {
-        _uiState.update { it.copy(pendingAgentNavigation = null) }
-    }
+
 
     fun consumePendingSystemAction() {
         _uiState.update { it.copy(pendingSystemAction = null) }
@@ -960,6 +887,7 @@ class ChatManager(
     private companion object {
         private const val STREAM_FRAME_DELAY_MILLIS = 65L
         private const val STREAM_EVENT_BUFFER_CAPACITY = 64
+        private const val THINKING_IDLE_TIMEOUT_MS = 3_000L
         private const val MAX_CHARS_PER_FRAME = 4
         private const val MAX_CHARS_PER_FRAME_FAST = 11
         private const val HIGH_WATER_CHARS = 64

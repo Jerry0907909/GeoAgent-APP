@@ -18,8 +18,8 @@ object EmailSender {
     suspend fun sendVerificationCode(toEmail: String, code: String): Result<Unit> {
         return sendPlainText(
             toEmail = toEmail,
-            subject = "GeoAgent 验证码",
-            content = "您的 GeoAgent 验证码是：$code\n验证码 5 分钟内有效。"
+            subject = "GeoScientist 验证码",
+            content = "您的 GeoScientist 验证码是：$code\n验证码 5 分钟内有效。"
         )
     }
 
@@ -58,9 +58,9 @@ object EmailSender {
                     }
                 )
                 val message = MimeMessage(session).apply {
-                    setFrom(InternetAddress(config.from, "GeoAgent", "UTF-8"))
+                    setFrom(InternetAddress(config.from, "GeoScientist", "UTF-8"))
                     setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail.trim(), false))
-                    setSubject(subject.ifBlank { "GeoAgent" }, "UTF-8")
+                    setSubject(subject.ifBlank { "GeoScientist" }, "UTF-8")
                     setText(content, "UTF-8")
                     sentDate = Date()
                 }

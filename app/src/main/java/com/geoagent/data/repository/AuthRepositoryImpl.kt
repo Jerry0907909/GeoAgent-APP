@@ -202,7 +202,7 @@ class AuthRepositoryImpl(
         if (!normalizedTo.contains("@")) {
             return Result.failure(IllegalArgumentException("请输入有效收件人邮箱"))
         }
-        val normalizedSubject = subject.trim().ifBlank { "来自 GeoAgent 的邮件" }
+        val normalizedSubject = subject.trim().ifBlank { "来自 GeoScientist 的邮件" }
         val sendResult = EmailSender.sendPlainText(normalizedTo, normalizedSubject, content)
         if (sendResult.isFailure) {
             return Result.failure(sendResult.exceptionOrNull() ?: IllegalStateException("邮件发送失败"))
