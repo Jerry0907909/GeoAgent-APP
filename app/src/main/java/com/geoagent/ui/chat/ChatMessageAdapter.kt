@@ -622,8 +622,8 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private fun cleanAssistantContent(content: String): String {
         val withoutSources = content
-            .replace(Regex("""(?ims)^\s*(?:Sources|来源)\s*[:：]\s*[\s\S]*$"""), "")
-            .replace(Regex("""(?m)^\s*[-•]\s+.*https?://\S+\s*$"""), "")
+            .replace(RE_SOURCES_BLOCK, "")
+            .replace(RE_SOURCE_LINKS, "")
         return withoutSources.trim()
     }
 
@@ -642,7 +642,7 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private fun SourceDto.displayDateSuffix(): String {
         val date = published_date?.normalizeDate()
-            ?: Regex("""20\d{2}[-/.年]\d{1,2}(?:[-/.月]\d{1,2})?""")
+            ?: RE_DATE_IN_TEXT
                 .find("$source $content ${url.orEmpty()}")
                 ?.value
                 ?.normalizeDate()
@@ -694,14 +694,14 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private fun formatThinkingForDisplay(raw: String): String {
         return raw.withoutAnswerDraft()
             .withoutInternalInstructionBlock()
-            .replace(Regex("""\s*[（(][A-Za-z][^（）()]*[）)]"""), "")
-            .replace(Regex("""(?i)\b(?:thinking\s*process|user\s*input|my\s*role|goal|acknowledge|reiterate|offer\s+assistance|maintain|refine\s+the\s+response|list\s+capabilities|option\s*\d*)\s*[:：]?\s*\d*\.?"""), "")
-            .replace(Regex("""(?i)\*\*[^*\u4e00-\u9fff]*(?:process|input|role|goal|option|response|capabilities)[^*]*\*\*"""), "")
-            .replace(Regex("""\*\*"""), "")
-            .replace(Regex("""(?m)^\s*[*\-•]?\s*[A-Za-z][A-Za-z0-9\s'",.&:/?+\-]*:?\s*$"""), "")
-            .replace(Regex("""(?m)^\s*[*\-•]\s*(?=[A-Za-z])[^。！？\n\u4e00-\u9fff]*$"""), "")
-            .replace(Regex("""[A-Za-z][A-Za-z0-9\s'",.&:/?+\-]{18,}(?=[。！？，、；：\n]|$)"""), "")
-            .replace(Regex("""[ \t]{2,}"""), " ")
+            .replace(RE_ENGLISH_PAREN, "")
+            .replace(RE_ENGLISH_KEYWORDS, "")
+            .replace(RE_ENGLISH_BOLD, "")
+            .replace(RE_BOLD_MARKERS, "")
+            .replace(RE_ENGLISH_LINE, "")
+            .replace(RE_ENGLISH_BULLET_LINE, "")
+            .replace(RE_LONG_ENGLISH, "")
+            .replace(RE_MULTI_SPACE, " ")
             .lines()
             .map { it.trim() }
             .filter { it.isNotBlank() && it.any { char -> char in '\u4e00'..'\u9fff' } }
@@ -725,14 +725,14 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private fun String.withoutAnswerDraft(): String {
         return replace(
-            Regex("""(?ims)(?:^|\n)\s*(?:草稿|回答草稿|最终回答|正式回答)\s*[:：][\s\S]*$"""),
+            RE_ANSWER_DRAFT,
             ""
         )
     }
 
     private fun String.withoutInternalInstructionBlock(): String {
         return replace(
-            Regex("""(?ims)(?:^|\n)\s*(?:要求|问信息|用户要求|回答要求|输出要求|要点|提炼要点)\s*[:：][\s\S]*$"""),
+            RE_INTERNAL_INSTRUCTION,
             ""
         )
     }
@@ -741,13 +741,13 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         val last = lastOrNull() ?: return this
         val normalized = last.trim()
         if (normalized.isEmpty()) return this
-        val looksLikeListPrefix = Regex("""^\d+[.、]\s*\S+""").containsMatchIn(normalized)
+        val looksLikeListPrefix = RE_LIST_PREFIX.containsMatchIn(normalized)
         val endsCleanly = normalized.last() in setOf('。', '！', '？', '.', '!', '?', '」', '”', '）', ')')
         return if (looksLikeListPrefix && !endsCleanly) dropLast(1) else this
     }
 
     private fun String.isLowInformationThinkingLine(): Boolean {
-        val normalized = replace(Regex("""[，。！？、；：,.!?;:\s]"""), "")
+        val normalized = replace(RE_PUNCTUATION_ONLY, "")
         return normalized.length <= 3 && normalized in setOf(
             "好",
             "好的",
@@ -843,6 +843,22 @@ class ChatMessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private const val PAYLOAD_CONTENT_ONLY = "content_only"
         private const val THINKING_TIMER_INTERVAL_MILLIS = 1_000L
         private const val MARKWON_RENDER_INTERVAL_MS = 60L
+
+        private val RE_ENGLISH_PAREN = Regex("""\s*[（(][A-Za-z][^（）()]*[）)]""")
+        private val RE_ENGLISH_KEYWORDS = Regex("""(?i)\b(?:thinking\s*process|user\s*input|my\s*role|goal|acknowledge|reiterate|offer\s+assistance|maintain|refine\s+the\s+response|list\s+capabilities|option\s*\d*)\s*[:：]?\s*\d*\.?""")
+        private val RE_ENGLISH_BOLD = Regex("""(?i)\*\*[^*\u4e00-\u9fff]*(?:process|input|role|goal|option|response|capabilities)[^*]*\*\*""")
+        private val RE_BOLD_MARKERS = Regex("""\*\*""")
+        private val RE_ENGLISH_LINE = Regex("""(?m)^\s*[*\-•]?\s*[A-Za-z][A-Za-z0-9\s'",.&:/?+\-]*:?\s*$""")
+        private val RE_ENGLISH_BULLET_LINE = Regex("""(?m)^\s*[*\-•]\s*(?=[A-Za-z])[^。！？\n\u4e00-\u9fff]*$""")
+        private val RE_LONG_ENGLISH = Regex("""[A-Za-z][A-Za-z0-9\s'",.&:/?+\-]{18,}(?=[。！？，、；：\n]|$)""")
+        private val RE_MULTI_SPACE = Regex("""[ \t]{2,}""")
+        private val RE_ANSWER_DRAFT = Regex("""(?ims)(?:^|\n)\s*(?:草稿|回答草稿|最终回答|正式回答)\s*[:：][\s\S]*$""")
+        private val RE_INTERNAL_INSTRUCTION = Regex("""(?ims)(?:^|\n)\s*(?:要求|问信息|用户要求|回答要求|输出要求|要点|提炼要点)\s*[:：][\s\S]*$""")
+        private val RE_SOURCES_BLOCK = Regex("""(?ims)^\s*(?:Sources|来源)\s*[:：]\s*[\s\S]*$""")
+        private val RE_SOURCE_LINKS = Regex("""(?m)^\s*[-•]\s+.*https?://\S+\s*$""")
+        private val RE_DATE_IN_TEXT = Regex("""20\d{2}[-/.年]\d{1,2}(?:[-/.月]\d{1,2})?""")
+        private val RE_LIST_PREFIX = Regex("""^\d+[.、]\s*\S+""")
+        private val RE_PUNCTUATION_ONLY = Regex("""[，。！？、；：,.!?;:\s]""")
     }
 
 }

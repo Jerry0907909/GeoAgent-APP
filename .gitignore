@@ -13,3 +13,7 @@ local.properties
 
 # Environment config (contains API keys)
 .env
+
+# Reasonix agent files
+.reasonix/
+REASONIX.md

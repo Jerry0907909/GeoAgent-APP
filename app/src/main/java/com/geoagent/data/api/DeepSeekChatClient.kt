@@ -238,5 +238,4 @@ class DeepSeekChatClient(
         return sources
     }
 
-    private companion object
 }

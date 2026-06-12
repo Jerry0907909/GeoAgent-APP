@@ -2,8 +2,8 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:gravity="center"
-        android:width="66dp"
-        android:height="66dp">
+        android:width="56dp"
+        android:height="56dp">
         <bitmap android:src="@drawable/geoagent_icon_symbol" />
     </item>
 </layer-list>

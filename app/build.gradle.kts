@@ -42,7 +42,7 @@ android {
         buildConfigField("String", "LLM_API_KEY", "\"${envVars["LLM_API_KEY"] ?: ""}\"")
         buildConfigField("String", "LLM_BASE_URL", "\"${envVars["LLM_BASE_URL"] ?: "https://api.siliconflow.cn/v1"}\"")
         buildConfigField("String", "LLM_MODEL", "\"${envVars["LLM_MODEL"] ?: "Qwen/Qwen3.5-9B"}\"")
-        buildConfigField("int", "LLM_MAX_TOKENS", "${envVars["LLM_MAX_TOKENS"] ?: "16384"}")
+        buildConfigField("int", "LLM_MAX_TOKENS", "${envVars["LLM_MAX_TOKENS"] ?: "4096"}")
         buildConfigField("String", "SILICONFLOW_API_KEY", "\"${envVars["SILICONFLOW_API_KEY"] ?: ""}\"")
         buildConfigField("String", "SILICONFLOW_EMBED_MODEL", "\"${envVars["SILICONFLOW_EMBED_MODEL"] ?: "BAAI/bge-m3"}\"")
         buildConfigField("String", "SMTP_HOST", "\"${envVars["SMTP_HOST"] ?: ""}\"")

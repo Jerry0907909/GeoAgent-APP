@@ -989,10 +989,13 @@ private class V2RuntimeEmailExecutor(
     }
 }
 
+private val RE_TITLE_NOISE = Regex("""(请|帮我|给我|安排|生成|创建|制定|任务|待办|会议|旅行|旅游|行程)""")
+private val RE_WHITESPACE = Regex("""\s+""")
+
 private fun extractRuntimeTitle(input: String, fallback: String): String {
     val cleaned = input
-        .replace(Regex("""(请|帮我|给我|安排|生成|创建|制定|任务|待办|会议|旅行|旅游|行程)"""), " ")
-        .replace(Regex("""\s+"""), " ")
+        .replace(RE_TITLE_NOISE, " ")
+        .replace(RE_WHITESPACE, " ")
         .trim(' ', '，', ',', '。', '.', '：', ':')
     return cleaned.take(32).ifBlank { fallback }
 }

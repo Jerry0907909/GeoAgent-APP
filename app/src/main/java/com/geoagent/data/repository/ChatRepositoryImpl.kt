@@ -412,13 +412,13 @@ class ChatRepositoryImpl(
 
         val systemPrompt = buildString {
             if (request.web_search == true) {
-                append("你是 GeoScientist，接入互联网搜索后擅长将搜索结果整合为简洁、自然、可读的中文回答。")
+                append("你是 GeoScientist。你已接入联网搜索。禁止在思考中逐条分析每个搜索结果——思考仅用于快速判断来源可信度和规划回答结构，控制在 3 句话以内。直接输出最终回答，用自然段落概括而非逐条罗列。")
             } else {
-                append("你是 GeoScientist，一个通用智能助手，擅长回答各类问题、提供有价值的见解。回答应准确、有条理且易于理解。")
+                append("你是 GeoScientist，一个通用智能助手。回答应准确、有条理。")
             }
-            append("请始终使用简体中文输出。如果启用思考模式，思考应简洁聚焦（控制在几句话内），直接提炼关键信息并快速得出结论，避免冗长逐条分析。")
+            append("如果启用思考模式，思考必须极度简练——仅确认问题意图、判断所需信息、规划回答方向。控制在 3 句话以内，像速记笔记而非完整段落。禁止逐点列举、展开分析、重复用户问题。请始终使用简体中文。")
             if (request.history.isNotEmpty()) {
-                append(" 当前问题可能引用前文中的对象、主题或结论，必须结合最近对话历史理解代词和省略表达。")
+                append(" 结合对话历史理解代词和省略表达。")
             }
             val customInstruction = userPrefsDataStore.customInstruction.first().trim()
             if (customInstruction.isNotBlank()) {
