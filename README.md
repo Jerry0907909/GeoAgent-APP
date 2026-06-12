@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**通用智能助手 Android 客户端** · 基于 Kotlin + Android Views · SSE 流式对话 · 本地知识库 RAG · 多 Agent 协作
+**通用智能助手 Android 客户端** · 基于 Kotlin + Android Views · SSE 流式对话 · 本地知识库 RAG
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.0-7F52FF?logo=kotlin)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/API-33+-3DDC84?logo=android)](https://developer.android.com)
@@ -21,7 +21,7 @@
 | 架构 | **MVVM** + Repository 模式 | 单一 `:app` 模块，清晰分层 |
 | DI | **Hilt** 2.59.2 | 编译时依赖注入 |
 | 网络 | **Retrofit** 2.11 + **OkHttp** 4.12 | HTTP 客户端 + SSE 长连接 |
-| 流式 | Kotlin **Flow** | 对话流式输出，40ms 帧间步进渲染 |
+| 流式 | Kotlin **Flow** | 对话流式输出，65ms 帧间 + 自适应步进渲染 |
 | 搜索 | **Tavily** Search API | 联网搜索增强 |
 | 向量 | **SiliconFlow** BGE-M3 | 文档嵌入与语义检索 |
 | 本地存储 | **DataStore** Preferences + **SQLite** | Token / 偏好 / 对话记录 / 文档索引 |
@@ -67,7 +67,7 @@ val bodyMap = mapOf(
     "model" to model,
     "messages" to messages,
     "stream" to true,
-    "max_tokens" to 16384,
+    "max_tokens" to defaultMaxTokens,
     "enable_thinking" to enableThinking
 )
 ```
@@ -79,21 +79,6 @@ SSE 事件通过 `Flow<ChatEvent>` 发射，`ChatManager` 以 65ms 帧间隔 + 4
 - **无硬性 token 截断** — 不设 `thinking_budget`，模型自然收尾，不会半截卡断
 - **3 秒空闲超时** — 思考结束后若回答迟迟未开始，自动过渡显示"正在整理回答…"
 
-### V2 Agent 运行时
-
-内置多 Agent 协作框架（`V2RuntimeOrchestrator`），深度融合 One LLM：
-
-| Agent | 职责 |
-|---|---|
-| **Search Agent** | 基于 Tavily 搜索证据回答，保留来源链接 |
-| **RAG Agent** | 基于本地知识库文档片段回答 |
-| **Research Agent** | 综合联网资料和本地文档进行研究分析 |
-| **Task Agent** | 拆解用户请求为可执行待办 |
-| **Schedule Agent** | 安排时间块计划，生成日历事件 |
-| **Email Agent** | 邮件内容生成与 SMTP 发送 |
-| **PDF Agent** | 解析 PDF 文本，提取重点和结构 |
-
----
 
 ## 功能一览
 
@@ -101,7 +86,6 @@ SSE 事件通过 `Flow<ChatEvent>` 发射，`ChatManager` 以 65ms 帧间隔 + 4
 - **智能模式** — 通用对话，支持深度思考 + 联网搜索
 - **知识库模式** — 基于上传文档的 RAG 精准问答
 - **思考模式** — 展示 AI 推理过程，可展开/折叠
-- **追问建议** — 对话结束后自动生成 3 条追问
 - **图片分析** — 支持图片 + 文字混合输入（Base64 传输）
 
 ### 流式渲染
@@ -173,7 +157,7 @@ adb reverse tcp:8000 tcp:8000
 LLM_API_KEY=your-api-key
 LLM_BASE_URL=https://api.example.com/v1
 LLM_MODEL=your-model-name
-LLM_MAX_TOKENS=16384
+LLM_MAX_TOKENS=4096
 
 # SiliconFlow Embedding API
 SILICONFLOW_API_KEY=your-key
@@ -228,10 +212,11 @@ app/src/main/java/com/geoagent/
 ├── GeoAgentApp.kt                  # Application 入口
 ├── MainActivity.kt                 # 主容器（Navigation Drawer）
 ├── agent/
-│   ├── AgentRegistry.kt            # IntentRouter + Email Agent（唯一意图路由 Agent）
+│   ├── AgentRegistry.kt            # IntentRouter + 内置 Agent 注册
 │   └── v2/                         # V2 Agent 运行时
-│       ├── V2AgentSystem.kt        # Agent 注册与元数据
-│       ├── V2Runtime.kt            # Agent 执行器（Search/RAG/Research/Task/Schedule/Email/PDF）
+│       ├── V2AgentSystem.kt        # Agent 注册、路由与编排
+│       ├── V2Artifacts.kt          # 结构化输出 artifact
+│       ├── V2Runtime.kt            # Agent 执行器（Search/RAG/Research/Task/Schedule/Email/PDF/File）
 │       └── V2ProductionRuntimeGateway.kt  # 生产环境 Gateway 实现
 ├── di/                             # Hilt 模块
 │   ├── AppHiltModule.kt
@@ -246,8 +231,7 @@ app/src/main/java/com/geoagent/
 │   ├── api/
 │   │   ├── DeepSeekChatClient.kt   # OpenAI-compatible SSE 流式 + 同步客户端
 │   │   ├── GeoAgentAuthApi.kt      # 认证 API
-│   │   ├── SiliconFlowEmbeddingClient.kt
-│   │   ├── TavilySearchClient.kt
+│   │   ├── SiliconFlowEmbeddingClient.kt  # BGE-M3 嵌入向量
 │   │   ├── EmailSender.kt          # SMTP 邮件发送
 │   │   └── dto/                    # 请求/响应 DTO
 │   ├── local/
@@ -257,6 +241,7 @@ app/src/main/java/com/geoagent/
 │   │   ├── DocumentStore.kt        # 文档元数据存储
 │   │   ├── DocumentParser.kt       # PDF/Word/TXT 解析
 │   │   ├── DocumentChunker.kt      # 文档分段
+│   │   ├── search/                 # Tavily 搜索缓存（Room）
 │   │   └── memory/                 # V2 记忆存储（Room）
 │   └── repository/                 # Repository 实现
 ├── ui/
@@ -268,10 +253,18 @@ app/src/main/java/com/geoagent/
 │   │   ├── ChatActivity.kt         # 主对话 Activity
 │   │   ├── ChatManager.kt          # 消息管理 + SSE 自适应步进渲染
 │   │   ├── ChatMessageAdapter.kt   # 消息气泡 RecyclerView + Markdown 实时渲染
-│   │   └── V2SystemActionMapper.kt # 系统动作映射
+│   │   ├── ConversationAdapter.kt  # 对话列表侧栏
+│   │   ├── DeepSeekModeSwitch.kt   # 思考/搜索模式切换
+│   │   ├── V2SystemActionMapper.kt # 系统动作映射
+│   │   ├── ShimmerTextView.kt      # 微光加载文字
+│   │   └── WaveBarsLoadingView.kt  # 声波动画加载
 │   ├── documents/                  # 知识库管理
 │   └── settings/                   # 设置页
-└── model/                          # Tavily 请求/响应模型
+├── model/                          # Tavily 请求/响应模型
+├── network/
+│   ├── TavilyApi.kt                # Tavily Retrofit 接口
+│   └── TavilyRepository.kt         # Tavily 搜索仓库（缓存 + 降级）
+└── ui/viewmodel/                   # ChatViewModel, SearchViewModel
 ```
 
 ---
