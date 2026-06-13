@@ -46,16 +46,16 @@
 │                Data Layer                    │
 │  ┌──────────┐ ┌──────────┐ ┌─────────────┐  │
 │  │ Remote   │ │ Local    │ │ Agent       │  │
-│  │ DeepSeek │ │ SQLite   │ │ V2 Runtime  │  │
-│  │ Tavily   │ │ DataStore│ │ Orchestrator│  │
-│  │ SiliFlow │ │ Chunks   │ │ IntentRouter│  │
+│  │ DeepSeek │ │ SQLite   │ │ Email       │  │
+│  │ Tavily   │ │ DataStore│ │ IntentRouter│  │
+│  │ SiliFlow │ │ Chunks   │ │ JavaMail    │  │
 │  └──────────┘ └──────────┘ └─────────────┘  │
 └──────────────────────────────────────────────┘
 ```
 
 ### 数据流
 
-用户消息 → `ChatManager.sendMessage()` → `IntentRouter.route()` 路由判断 → **本地 Agent** 或 **远端 SSE API** → `DeepSeekChatClient.streamChat()` → `ChatEvent` Flow → `ChatManager` 字符步进渲染 → `ChatMessageAdapter` Markdown 实时渲染
+用户消息 → `ChatManager.sendMessage()` → `IntentRouter.route()` 判断是否为邮件指令 → **邮件 Agent** 或 **远端 SSE API** → `DeepSeekChatClient.streamChat()` → `ChatEvent` Flow → `ChatManager` 字符步进渲染 → `ChatMessageAdapter` Markdown 实时渲染
 
 ### SSE 流式对话
 
@@ -77,7 +77,6 @@ SSE 事件通过 `Flow<ChatEvent>` 发射，`ChatManager` 以 65ms 帧间隔 + 4
 ### 思考模式优化
 - **Prompt 引导简洁思考** — 系统提示词要求思考聚焦在几句话内，直接提炼关键信息
 - **无硬性 token 截断** — 不设 `thinking_budget`，模型自然收尾，不会半截卡断
-- **3 秒空闲超时** — 思考结束后若回答迟迟未开始，自动过渡显示"正在整理回答…"
 
 
 ## 功能一览
@@ -212,16 +211,10 @@ app/src/main/java/com/geoagent/
 ├── GeoAgentApp.kt                  # Application 入口
 ├── MainActivity.kt                 # 主容器（Navigation Drawer）
 ├── agent/
-│   ├── AgentRegistry.kt            # IntentRouter + 内置 Agent 注册
-│   └── v2/                         # V2 Agent 运行时
-│       ├── V2AgentSystem.kt        # Agent 注册、路由与编排
-│       ├── V2Artifacts.kt          # 结构化输出 artifact
-│       ├── V2Runtime.kt            # Agent 执行器（Search/RAG/Research/Task/Schedule/Email/PDF/File）
-│       └── V2ProductionRuntimeGateway.kt  # 生产环境 Gateway 实现
+│   └── AgentRegistry.kt            # IntentRouter + Email Agent 注册
 ├── di/                             # Hilt 模块
 │   ├── AppHiltModule.kt
-│   ├── SearchHiltModule.kt
-│   └── V2AgentHiltModule.kt
+│   └── SearchHiltModule.kt
 ├── domain/
 │   ├── model/Models.kt             # User, Message, Conversation, ChatMode
 │   ├── repository/                 # Repository 接口（Auth/Chat/Document）
@@ -241,8 +234,7 @@ app/src/main/java/com/geoagent/
 │   │   ├── DocumentStore.kt        # 文档元数据存储
 │   │   ├── DocumentParser.kt       # PDF/Word/TXT 解析
 │   │   ├── DocumentChunker.kt      # 文档分段
-│   │   ├── search/                 # Tavily 搜索缓存（Room）
-│   │   └── memory/                 # V2 记忆存储（Room）
+│   │   └── search/                 # Tavily 搜索缓存（Room）
 │   └── repository/                 # Repository 实现
 ├── ui/
 │   ├── theme/AppThemeHelper.kt     # 主题适配
@@ -255,7 +247,6 @@ app/src/main/java/com/geoagent/
 │   │   ├── ChatMessageAdapter.kt   # 消息气泡 RecyclerView + Markdown 实时渲染
 │   │   ├── ConversationAdapter.kt  # 对话列表侧栏
 │   │   ├── DeepSeekModeSwitch.kt   # 思考/搜索模式切换
-│   │   ├── V2SystemActionMapper.kt # 系统动作映射
 │   │   ├── ShimmerTextView.kt      # 微光加载文字
 │   │   └── WaveBarsLoadingView.kt  # 声波动画加载
 │   ├── documents/                  # 知识库管理
